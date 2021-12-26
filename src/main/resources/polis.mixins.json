@@ -1,8 +1,8 @@
 {
   "required": true,
   "minVersion": "0.8",
-  "package": "com.smexywetrat.polis.mixin",
-  "refmap": "polis.refmap.json",
+  "package": "com.iosenberg.polisproject.mixin",
+  "refmap": "polisproject.refmap.json",
   "compatibilityLevel": "JAVA_8",
   "mixins": [
 	"WorldLightManagerMixin"
