@@ -1,15 +1,10 @@
 package com.iosenberg.polisproject.dimension;
 
 import java.awt.Point;
-import java.util.HashMap;
-import java.util.Map;
-
-import org.apache.logging.log4j.Level;
 
 import com.iosenberg.polisproject.PolisProject;
 
 import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraft.world.storage.DimensionSavedDataManager;
@@ -20,7 +15,8 @@ import net.minecraft.world.storage.WorldSavedData;
 public class PPWorldSavedData extends WorldSavedData{
 	private static final String ROAD_DATA = PolisProject.MODID + "RoadMap";
 	private static final PPWorldSavedData CLIENT_DUMMY = new PPWorldSavedData();
-	private Map<String,RoadChunk> map = new HashMap<>();
+	private CompoundNBT roadMap = new CompoundNBT(); //A map of Roads. 
+	//Road is an NBT with the key "x,y", and Boolean East (x+), West (x-), South (z+), North (z-)
 	
 	public PPWorldSavedData() {
 		super(ROAD_DATA);
@@ -37,75 +33,45 @@ public class PPWorldSavedData extends WorldSavedData{
 
 	@Override
 	public void load(CompoundNBT data) {
-		wbAltarMade = data.getBoolean("WBALtarMade");
+		roadMap = (CompoundNBT) data.get("roadMap");
 	}
 
 	@Override
 	public CompoundNBT save(CompoundNBT data) {
-		data..putBoolean("WBAltarMade", wbAltarMade);
+		data.put("RoadMap", roadMap);
 		return data;
 	}
 
-	
+	//Puts a RoadNBT into roadMap. Key is "x,y" of the chunk, and it contains a boolean for each direction, whether it connects to a road
+	//These functions need to be cleaned up a lot. Need to stop using Points and need to fix y to z
 	public void put(Point chunk, Point chunkto, Point chunkfrom) {
+		int x = chunk.x;
+		int y = chunk.y;
+		Boolean East = false;
+		Boolean West = false;
+		Boolean South = false;
+		Boolean North = false;
+		if (chunkto.x > x || chunkfrom.x > x) East = true;
+		if (chunkto.x < x || chunkfrom.x < x) West = true;
+		if (chunkto.y > y || chunkfrom.y > y) South = true;
+		if (chunkto.y < y || chunkfrom.y < y) North = true;
 		String key = chunk.x + "," + chunk.y;
-		if(map.containsKey(key)) 
-			map.get(key).add(chunkto, chunkfrom);
-		else
-			map.put(key, new RoadChunk(chunk, chunkto, chunkfrom));
+		if(roadMap.contains(key)) {
+			roadMap.getCompound(key).putBoolean("East", roadMap.getCompound(key).getBoolean("East") || East);
+			roadMap.getCompound(key).putBoolean("West", roadMap.getCompound(key).getBoolean("West") || West);
+			roadMap.getCompound(key).putBoolean("South", roadMap.getCompound(key).getBoolean("South") || South);
+			roadMap.getCompound(key).putBoolean("North", roadMap.getCompound(key).getBoolean("North") || North);
+	}
+		else {
+			CompoundNBT newRoad = new CompoundNBT();
+			newRoad.putBoolean("East", East);
+			newRoad.putBoolean("West", West);
+			newRoad.putBoolean("South", South);
+			newRoad.putBoolean("North", North);
+			roadMap.put(key, newRoad);
+		}
 	}
 	
-	public void put(Point chunk, Point chunkto, BlockPos startpos) {
-		String key = chunk.x + "," + chunk.y;
-		if(map.containsKey(key))
-			map.get(key).add(chunkto, startpos);
-		else
-			map.put(key, new RoadChunk(chunk, chunkto, startpos));
-	}
-	
-	
-	public class RoadChunk {
-		int x;
-		int z;
-		BlockPos start; //If this is the start of the road (will have no inbound chunk)
-		Point[] chunks = {null, null, null, null}; //east X+, west X-, south Z+, north Z-
-		
-		RoadChunk(Point chunk, Point chunkto, Point chunkfrom) {
-			x = chunk.x;
-			z = chunk.y;
-			chunks[getIndex(chunkto)] = chunkto;
-			chunks[getIndex(chunkfrom)] = chunkfrom;
-		}
-			
-		RoadChunk(Point chunk, Point chunkto, BlockPos startpos) {
-			x = chunk.x;
-			z = chunk.y;
-			chunks[getIndex(chunkto)] = chunkto;
-			start = startpos;
-		}	
-		
-		int getIndex(Point chunkpos) {
-			int chunkX = chunkpos.x;
-			int chunkZ = chunkpos.y;
-			if (chunkX > x) return 0;
-			if (chunkX < x) return 1;
-			if (chunkZ > z) return 2;
-			if (chunkZ < z) return 3;
-			PolisProject.LOGGER.log(Level.DEBUG, "Uh oh!, trying to move to itself!");
-			return -1;
-		}
-		
-		void add(Point chunkto, Point chunkfrom) {
-			if(chunks[getIndex(chunkto)] == null)
-				chunks[getIndex(chunkto)] = (chunkto);
-			if(chunks[getIndex(chunkfrom)] == null)
-				chunks[getIndex(chunkfrom)] = (chunkfrom);
-		}
-		
-		void add(Point chunkto, BlockPos startpos) {
-			if(chunks[getIndex(chunkto)] == null)
-				chunks[getIndex(chunkto)] = chunkto;
-			start = startpos;
-		}
-	}
+	//I don't think I need this, but I might, so I'm just commenting it out for now
+//	public void put(Point chunk, Point chunkto, BlockPos startpos) {}
 }
