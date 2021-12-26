@@ -49,7 +49,7 @@ public class PolisProject {
 	
 	public void biomeModification(final BiomeLoadingEvent event) {
 //		event.getGeneration().getStructures().add(() -> PPConfiguredStructures.CONFIGURED_INTERSECTION);
-//		event.getGeneration().getStructures().add(() -> PPConfiguredStructures.CONFIGURED_CITY);
+		event.getGeneration().getStructures().add(() -> PPConfiguredStructures.CONFIGURED_CITY);
 	}
 	
 	public void addDimensionalSpacing(final WorldEvent.Load event) {
@@ -63,7 +63,7 @@ public class PolisProject {
     		
     		Map<Structure<?>, StructureSeparationSettings> tempMap = new HashMap<>(serverWorld.getChunkSource().generator.getSettings().structureConfig());
 //    		tempMap.put(PPStructures.INTERSECTION, DimensionStructuresSettings.DEFAULTS.get(PPStructures.INTERSECTION));
-//    		tempMap.put(PPStructures.CITY, DimensionStructuresSettings.DEFAULTS.get(PPStructures.CITY));
+    		tempMap.put(PPStructures.CITY, DimensionStructuresSettings.DEFAULTS.get(PPStructures.CITY));
             serverWorld.getChunkSource().generator.getSettings().structureConfig = tempMap;
 		}
 	}

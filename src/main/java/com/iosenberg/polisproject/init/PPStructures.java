@@ -2,9 +2,13 @@ package com.iosenberg.polisproject.init;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.iosenberg.polisproject.PolisProject;
+import com.iosenberg.polisproject.structure.CityStructure;
+import com.iosenberg.polisproject.structure.city.AbstractCityManager;
 
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.registry.Registry;
+import net.minecraft.world.gen.feature.NoFeatureConfig;
 import net.minecraft.world.gen.feature.structure.IStructurePieceType;
 import net.minecraft.world.gen.feature.structure.Structure;
 import net.minecraft.world.gen.settings.DimensionStructuresSettings;
@@ -18,15 +22,15 @@ public class PPStructures {
 //	public static final RegistryObject<Feature<NoFeatureConfig>> ROADFEATUREREGISTRY = createFeature("road_feature",() -> ROAD_FEATURE);
 	
 //	public static Structure<NoFeatureConfig> INTERSECTION /*junction?*/ = new IntersectionStructure(NoFeatureConfig.CODEC);
-//	public static Structure<NoFeatureConfig> CITY = new CityStructure(NoFeatureConfig.CODEC);
+	public static Structure<NoFeatureConfig> CITY = new CityStructure(NoFeatureConfig.CODEC);
 //	public static IStructurePieceType INTERSECTION_PIECE = IntersectionStructurePiece.Piece::new;
-//	public static IStructurePieceType CITY_PIECE = AbstractCityManager.Piece::new;
+	public static IStructurePieceType CITY_PIECE = AbstractCityManager.Piece::new;
 	
 	public static void registerStructures(Register<Structure<?>> event) {
 //		PolisProject.register(event.getRegistry(), INTERSECTION, "intersection");
-//		PolisProject.register(event.getRegistry(), CITY, "city");
+		PolisProject.register(event.getRegistry(), CITY, "city");
 //		registerStructure(INTERSECTION, new StructureSeparationSettings(15, 7, 70031124), true);
-//		registerStructure(CITY, new StructureSeparationSettings(60, 40, 42113007), false);
+		registerStructure(CITY, new StructureSeparationSettings(60, 40, 42113007), false);
 		
 		PPStructures.registerAllPieces();
 	}
@@ -50,7 +54,7 @@ public class PPStructures {
 	
 	public static void registerAllPieces() {
 //		registerStructurePiece(INTERSECTION_PIECE, new ResourceLocation(Polis.MODID, "intersection_piece"));
-//		registerStructurePiece(CITY_PIECE, new ResourceLocation(Polis.MODID, "city_piece"));
+		registerStructurePiece(CITY_PIECE, new ResourceLocation(PolisProject.MODID, "city_piece"));
 	}
 	
 	static void registerStructurePiece(IStructurePieceType structurePiece, ResourceLocation rl) {

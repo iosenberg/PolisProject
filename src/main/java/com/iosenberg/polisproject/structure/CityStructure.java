@@ -3,9 +3,11 @@ package com.iosenberg.polisproject.structure;
 import java.util.Map;
 
 import com.google.common.collect.ImmutableMap;
+import com.iosenberg.polisproject.structure.city.AbstractCityManager;
 import com.mojang.serialization.Codec;
 
 import net.minecraft.util.SharedSeedRandom;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.MutableBoundingBox;
 import net.minecraft.util.registry.DynamicRegistries;
@@ -46,7 +48,7 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 			SharedSeedRandom seedRand, int chunkX, int chunkZ, Biome biomeIn, ChunkPos chunkPos,
 			NoFeatureConfig config) {
 		//maybe check standard deviation of the height of blocks????
-		return false;
+		return true;
 	}
 	
 	public static class Start extends StructureStart<NoFeatureConfig> {
@@ -68,6 +70,7 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 			int y = generator.getBaseHeight(x, z, Heightmap.Type.WORLD_SURFACE);
 			
 			//Add pieces function???? Figure this out later
+			this.pieces.add(new AbstractCityManager.Piece(templateManagerIn, x, y, z));
 //			this.pieces.add(new AbstractCityManager.Piece(new BlockPos(x,y,z), chunkX, chunkZ, map));//CityHashMap.get(chunkX, chunkZ)));
 			this.calculateBoundingBox();
 		}
