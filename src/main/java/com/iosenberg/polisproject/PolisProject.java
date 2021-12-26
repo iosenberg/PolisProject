@@ -6,6 +6,9 @@ import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.iosenberg.polisproject.init.PPConfiguredStructures;
+import com.iosenberg.polisproject.init.PPStructures;
+
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
 import net.minecraft.world.gen.FlatChunkGenerator;
@@ -40,13 +43,13 @@ public class PolisProject {
 	}
 	
 	public void onRegisterStructures(final RegistryEvent.Register<Structure<?>> event) {
-		PolisStructures.registerStructures(event);
-		PolisConfiguredStructures.registerConfiguredStructures();
+		PPStructures.registerStructures(event);
+		PPConfiguredStructures.registerConfiguredStructures();
 	}
 	
 	public void biomeModification(final BiomeLoadingEvent event) {
-		event.getGeneration().getStructures().add(() -> PolisConfiguredStructures.CONFIGURED_INTERSECTION);
-		event.getGeneration().getStructures().add(() -> PolisConfiguredStructures.CONFIGURED_CITY);
+		event.getGeneration().getStructures().add(() -> PPConfiguredStructures.CONFIGURED_INTERSECTION);
+		event.getGeneration().getStructures().add(() -> PPConfiguredStructures.CONFIGURED_CITY);
 	}
 	
 	public void addDimensionalSpacing(final WorldEvent.Load event) {
@@ -59,8 +62,8 @@ public class PolisProject {
     		}
     		
     		Map<Structure<?>, StructureSeparationSettings> tempMap = new HashMap<>(serverWorld.getChunkSource().generator.getSettings().structureConfig());
-    		tempMap.put(PolisStructures.INTERSECTION, DimensionStructuresSettings.DEFAULTS.get(PolisStructures.INTERSECTION));
-    		tempMap.put(PolisStructures.CITY, DimensionStructuresSettings.DEFAULTS.get(PolisStructures.CITY));
+    		tempMap.put(PPStructures.INTERSECTION, DimensionStructuresSettings.DEFAULTS.get(PPStructures.INTERSECTION));
+    		tempMap.put(PPStructures.CITY, DimensionStructuresSettings.DEFAULTS.get(PPStructures.CITY));
             serverWorld.getChunkSource().generator.getSettings().structureConfig = tempMap;
 		}
 	}
