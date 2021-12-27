@@ -2,7 +2,10 @@ package com.iosenberg.polisproject.structure;
 
 import java.util.Map;
 
+import org.apache.logging.log4j.Level;
+
 import com.google.common.collect.ImmutableMap;
+import com.iosenberg.polisproject.PolisProject;
 import com.iosenberg.polisproject.structure.city.AbstractCityManager;
 import com.mojang.serialization.Codec;
 
@@ -70,7 +73,9 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 			int y = generator.getBaseHeight(x, z, Heightmap.Type.WORLD_SURFACE);
 			
 			//Add pieces function???? Figure this out later
-			this.pieces.add(new AbstractCityManager.Piece(templateManagerIn, x, y, z));
+			PolisProject.LOGGER.log(Level.DEBUG, "Biome is " + biomeIn.getBiomeCategory().toString() + ", " + generator.getBiomeSource().getNoiseBiome(x >> 2, y, z >> 2).getBiomeCategory().toString());
+			PolisProject.LOGGER.log(Level.DEBUG, "So the number I'm passing in is " + biomeMap.get(biomeIn.getBiomeCategory().toString()));
+			this.pieces.add(new AbstractCityManager.Piece(templateManagerIn, x, y, z, biomeMap.get(biomeIn.getBiomeCategory().toString())));
 //			this.pieces.add(new AbstractCityManager.Piece(new BlockPos(x,y,z), chunkX, chunkZ, map));//CityHashMap.get(chunkX, chunkZ)));
 			this.calculateBoundingBox();
 		}
