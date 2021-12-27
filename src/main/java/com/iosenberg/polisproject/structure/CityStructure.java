@@ -25,6 +25,7 @@ import net.minecraft.world.gen.feature.structure.StructureStart;
 import net.minecraft.world.gen.feature.template.TemplateManager;
 
 public class CityStructure extends Structure<NoFeatureConfig>{
+	
 	//Basically a custom enumeration of biomes. Referenced and stored for map-building purposes
 	private static final Map<String, Integer> biomeMap = ImmutableMap.<String, Integer>builder().put("NONE", 0)
 			.put("TAIGA", 1).put("EXTREME_HILLS", 2).put("JUNGLE", 3).put("MESA", 4).put("PLAINS", 5).put("SAVANNA", 6)
@@ -51,6 +52,7 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 			SharedSeedRandom seedRand, int chunkX, int chunkZ, Biome biomeIn, ChunkPos chunkPos,
 			NoFeatureConfig config) {
 		//maybe check standard deviation of the height of blocks????
+		//Also make sure it doesn't spawn too close to a village, or anything else that might cause a big overlap
 		return true;
 	}
 	

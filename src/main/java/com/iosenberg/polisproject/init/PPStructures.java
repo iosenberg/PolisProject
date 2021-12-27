@@ -4,6 +4,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.iosenberg.polisproject.PolisProject;
 import com.iosenberg.polisproject.structure.CityStructure;
+import com.iosenberg.polisproject.structure.RoadJunctionStructure;
+import com.iosenberg.polisproject.structure.RoadJunctionStructurePiece;
 import com.iosenberg.polisproject.structure.city.AbstractCityManager;
 
 import net.minecraft.util.ResourceLocation;
@@ -21,15 +23,15 @@ public class PPStructures {
 //	public static Feature<NoFeatureConfig> ROAD_FEATURE = new RoadFeature(NoFeatureConfig.CODEC);
 //	public static final RegistryObject<Feature<NoFeatureConfig>> ROADFEATUREREGISTRY = createFeature("road_feature",() -> ROAD_FEATURE);
 	
-//	public static Structure<NoFeatureConfig> INTERSECTION /*junction?*/ = new IntersectionStructure(NoFeatureConfig.CODEC);
+	public static Structure<NoFeatureConfig> ROAD_JUNCTION = new RoadJunctionStructure(NoFeatureConfig.CODEC);
 	public static Structure<NoFeatureConfig> CITY = new CityStructure(NoFeatureConfig.CODEC);
-//	public static IStructurePieceType INTERSECTION_PIECE = IntersectionStructurePiece.Piece::new;
+	public static IStructurePieceType ROAD_JUNCTION_PIECE = RoadJunctionStructurePiece.Piece::new;
 	public static IStructurePieceType CITY_PIECE = AbstractCityManager.Piece::new;
 	
 	public static void registerStructures(Register<Structure<?>> event) {
-//		PolisProject.register(event.getRegistry(), INTERSECTION, "intersection");
+		PolisProject.register(event.getRegistry(), ROAD_JUNCTION, "road_junction");
+		registerStructure(ROAD_JUNCTION, new StructureSeparationSettings(15, 7, 70031124), true);
 		PolisProject.register(event.getRegistry(), CITY, "city");
-//		registerStructure(INTERSECTION, new StructureSeparationSettings(15, 7, 70031124), true);
 		registerStructure(CITY, new StructureSeparationSettings(60, 40, 42113007), false);
 		
 		PPStructures.registerAllPieces();
@@ -53,7 +55,7 @@ public class PPStructures {
 	}
 	
 	public static void registerAllPieces() {
-//		registerStructurePiece(INTERSECTION_PIECE, new ResourceLocation(Polis.MODID, "intersection_piece"));
+		registerStructurePiece(ROAD_JUNCTION_PIECE, new ResourceLocation(PolisProject.MODID, "road_junction_piece"));
 		registerStructurePiece(CITY_PIECE, new ResourceLocation(PolisProject.MODID, "city_piece"));
 	}
 	

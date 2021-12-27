@@ -25,9 +25,9 @@ public abstract class AbstractCityManager {
 	
 	public abstract int generatePieces();
 	
-	//CityPiece, which is inhereted by all city managers
+	//CityPiece, which is inherited by all city managers
 	public static class Piece extends StructurePiece {
-		//Map of colored blocks which corrsponds to CityStructure.biomeMap. For debug purposes
+		//Map of colored blocks which corresponds to CityStructure.biomeMap. For debug purposes
 		private static final BlockState[] colorMap= {
 			Blocks.BLACK_STAINED_GLASS.defaultBlockState(),			//none
 			Blocks.LIGHT_GRAY_STAINED_GLASS.defaultBlockState(),	//taiga
@@ -48,7 +48,7 @@ public abstract class AbstractCityManager {
 			Blocks.BLACK_STAINED_GLASS.defaultBlockState()			//nether
 		};
 		
-		public int biome;
+		public static int biome; //static for now, but will need to be stored elsewhere later, maybe WorldSavedData
 	
 		public Piece(TemplateManager templateManagerIn, CompoundNBT tagCompound) {
 			super(PPStructures.CITY_PIECE, tagCompound);
