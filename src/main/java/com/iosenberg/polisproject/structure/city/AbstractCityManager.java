@@ -72,7 +72,7 @@ public abstract class AbstractCityManager {
 		
 		//all of these can be static for now, but I will NEED to store them elsewhere before seriously building this mod
 		public static int biome;
-		private static Point[][][][] map = new Point[11][11][16][16]; //maybe use a custom class instead of point?
+		private static byte[][][][] map = new byte[11][11][16][16]; //maybe use a custom class instead of point?
 		private static int chunkX;
 		private static int chunkZ;
 		
@@ -91,7 +91,7 @@ public abstract class AbstractCityManager {
 		}
 		
 		//Constructor for map
-		public Piece(BlockPos blockPos, int chunkXin, int chunkZin, Point[][] mapIn) {
+		public Piece(BlockPos blockPos, int chunkXin, int chunkZin, byte[][] mapIn) {
 			super(PPStructures.CITY_PIECE, 0);
 			this.boundingBox = new MutableBoundingBox(blockPos.getX()-90, blockPos.getY()-30, blockPos.getZ()-90,
 					blockPos.getX() + 90, blockPos.getY()+30, blockPos.getZ() + 90);
@@ -125,12 +125,14 @@ public abstract class AbstractCityManager {
 				for(int j=0;j<11;j++) {
 					//If chunkX+i-5, chunkZ+j-5 is the input chunk, it is the Selected Chunk
 					if((chunkPos.x == chunkX+i-5) && (chunkPos.z == chunkZ+j-5)) {
-						System.out.println("yes");
 						//Once selected chunk is found, iterates through blocks in chunk, applying info from map
 						for(int k=0;k<16;k++) {
 							for(int l=0;l<16;l++) {
-								int y = map[i][j][k][l].x + 5;
-								BlockState color = biomeColorMap[map[i][j][k][l].y];
+//								int y = map[i][j][k][l].x + 5;
+//								BlockState color = biomeColorMap[map[i][j][k][l].y];
+
+								int y = map[i][j][k][l];
+								BlockState color = indexColorMap[y != 5 ? 14 : 0];
 								
 								this.placeBlock(worldIn, color, x+k, y-1, z+l, this.boundingBox);
 								if(y>50)

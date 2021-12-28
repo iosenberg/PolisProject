@@ -9,6 +9,7 @@ import com.google.common.collect.ImmutableMap;
 import com.iosenberg.polisproject.PolisProject;
 import com.iosenberg.polisproject.structure.city.AbstractCityManager;
 import com.iosenberg.polisproject.structure.city.AbstractCityManager.Piece;
+import com.iosenberg.polisproject.structure.city.FordFulkerson;
 import com.mojang.serialization.Codec;
 
 import net.minecraft.util.SharedSeedRandom;
@@ -55,7 +56,8 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 			NoFeatureConfig config) {
 		//maybe check standard deviation of the height of blocks????
 		//Also make sure it doesn't spawn too close to a village, or anything else that might cause a big overlap
-		return true;
+		if (biomeIn.getBiomeCategory().toString().equals("DESERT")) return true;
+		return false;
 	}
 	
 	public static class Start extends StructureStart<NoFeatureConfig> {
@@ -73,28 +75,43 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 			
 			int x = (chunkX << 4) - 80; //+ 7;
 			int z = (chunkZ << 4) - 80; //+ 7;
-//			BiomeProvider biomesource = generator.getBiomeSource();
+			BiomeProvider biomesource = generator.getBiomeSource();
 //			int y = generator.getBaseHeight(x, z, Heightmap.Type.WORLD_SURFACE);
 			
-			//Generate map.
-			Point[][] cityMap = new Point[176][176];
+			//Generate map. 176
+//			Point[][] cityMap = new Point[176][176];
+//			
+//			//iterates by blocks of 4, fills in each point in cityMap with x = height, y = biome?
+//			for (int i = 0; i < 88; i++) {
+//				for (int j = 0; j < 88; j++) {
+//					int xi = x+i*2;
+//					int zj = z+j*2;
+//					int height = generator.getFirstFreeHeight(xi, zj, Heightmap.Type.WORLD_SURFACE);
+//					int biome = biomeMap.get(generator.getBiomeSource().getNoiseBiome(x/4+i/2, height, z/4+j/2).getBiomeCategory().toString());
+//					cityMap[i*2][j*2] = new Point(height, biome);
+//					cityMap[i*2+1][j*2] = new Point(height, biome);
+//					cityMap[i*2][j*2+1] = new Point(height, biome);
+//					cityMap[i*2+1][j*2+1] = new Point(height, biome);
+//				}
+//			}
 			
-			//iterates by blocks of 4, fills in each point in cityMap with x = height, y = biome?
-			for (int i = 0; i < 88; i++) {
-				for (int j = 0; j < 88; j++) {
-					int xi = x+i*2;
-					int zj = z+j*2;
-					int height = generator.getFirstFreeHeight(xi, zj, Heightmap.Type.WORLD_SURFACE);
-					int biome = biomeMap.get(generator.getBiomeSource().getNoiseBiome(x/4+i/2, height, z/4+j/2).getBiomeCategory().toString());
-					cityMap[i*2][j*2] = new Point(height, biome);
-					cityMap[i*2+1][j*2] = new Point(height, biome);
-					cityMap[i*2][j*2+1] = new Point(height, biome);
-					cityMap[i*2+1][j*2+1] = new Point(height, biome);
+			
+		//Generate map. 88
+			Point[][] shityMap = new Point[44][44];
+			int[] biomeModeList = new int[17];
+			for (int i = 0; i < 44; i++) {
+				for (int j = 0; j < 44; j++) {
+					int height = generator.getFirstFreeHeight(x+i*4, z+j*4, Heightmap.Type.WORLD_SURFACE);
+					int biome = biomeMap.get(biomesource.getNoiseBiome(x/4+i, height, z/4+j).getBiomeCategory().toString());
+					shityMap[i][j] = new Point(height, biome);
+					biomeModeList[biome]++;
 				}
 			}
 			
+			int biomeModeIndex = 0;
+			for(int i=0;i<biomeModeList.length;i++) if (biomeModeList[i] > biomeModeList[biomeModeIndex]) biomeModeIndex = i;
 			
-			
+			byte[][] cityMap = FordFulkerson.placeCity(shityMap, biomeModeIndex);
 			
 			//Add pieces function???? Figure this out later
 //			PolisProject.LOGGER.log(Level.DEBUG, "Biome is " + biomeIn.getBiomeCategory().toString() + ", " + generator.getBiomeSource().getNoiseBiome(x >> 2, y, z >> 2).getBiomeCategory().toString());
