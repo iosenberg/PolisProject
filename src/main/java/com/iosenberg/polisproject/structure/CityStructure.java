@@ -1,5 +1,6 @@
 package com.iosenberg.polisproject.structure;
 
+import java.awt.Point;
 import java.util.Map;
 
 import org.apache.logging.log4j.Level;
@@ -7,6 +8,7 @@ import org.apache.logging.log4j.Level;
 import com.google.common.collect.ImmutableMap;
 import com.iosenberg.polisproject.PolisProject;
 import com.iosenberg.polisproject.structure.city.AbstractCityManager;
+import com.iosenberg.polisproject.structure.city.AbstractCityManager.Piece;
 import com.mojang.serialization.Codec;
 
 import net.minecraft.util.SharedSeedRandom;
@@ -69,16 +71,41 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 			
 			//Rotation rotation = Rotation.NONE;
 			
-			int x = (chunkX << 4) + 7;
-			int z = (chunkZ << 4) + 7;
+			int x = (chunkX << 4) - 80; //+ 7;
+			int z = (chunkZ << 4) - 80; //+ 7;
+//			BiomeProvider biomesource = generator.getBiomeSource();
+//			int y = generator.getBaseHeight(x, z, Heightmap.Type.WORLD_SURFACE);
 			
-			int y = generator.getBaseHeight(x, z, Heightmap.Type.WORLD_SURFACE);
+			//Generate map.
+			Point[][] cityMap = new Point[176][176];
+			
+			//iterates by blocks of 4, fills in each point in cityMap with x = height, y = biome?
+			for (int i = 0; i < 88; i++) {
+				for (int j = 0; j < 88; j++) {
+					int xi = x+i*2;
+					int zj = z+j*2;
+					int height = generator.getFirstFreeHeight(xi, zj, Heightmap.Type.WORLD_SURFACE);
+					int biome = biomeMap.get(generator.getBiomeSource().getNoiseBiome(x/4+i/2, height, z/4+j/2).getBiomeCategory().toString());
+					cityMap[i*2][j*2] = new Point(height, biome);
+					cityMap[i*2+1][j*2] = new Point(height, biome);
+					cityMap[i*2][j*2+1] = new Point(height, biome);
+					cityMap[i*2+1][j*2+1] = new Point(height, biome);
+				}
+			}
+			
+			
+			
 			
 			//Add pieces function???? Figure this out later
-			PolisProject.LOGGER.log(Level.DEBUG, "Biome is " + biomeIn.getBiomeCategory().toString() + ", " + generator.getBiomeSource().getNoiseBiome(x >> 2, y, z >> 2).getBiomeCategory().toString());
-			PolisProject.LOGGER.log(Level.DEBUG, "So the number I'm passing in is " + biomeMap.get(biomeIn.getBiomeCategory().toString()));
-			this.pieces.add(new AbstractCityManager.Piece(templateManagerIn, x, y, z, biomeMap.get(biomeIn.getBiomeCategory().toString())));
+//			PolisProject.LOGGER.log(Level.DEBUG, "Biome is " + biomeIn.getBiomeCategory().toString() + ", " + generator.getBiomeSource().getNoiseBiome(x >> 2, y, z >> 2).getBiomeCategory().toString());
+//			PolisProject.LOGGER.log(Level.DEBUG, "So the number I'm passing in is " + biomeMap.get(biomeIn.getBiomeCategory().toString()));
+//			this.pieces.add(new AbstractCityManager.Piece(templateManagerIn, x, y, z, biomeMap.get(biomeIn.getBiomeCategory().toString())));
 //			this.pieces.add(new AbstractCityManager.Piece(new BlockPos(x,y,z), chunkX, chunkZ, map));//CityHashMap.get(chunkX, chunkZ)));
+
+			x += 87;
+			z += 87;
+			BlockPos blockpos = new BlockPos(x, generator.getFirstFreeHeight(x, z, Heightmap.Type.WORLD_SURFACE), z);
+			this.pieces.add(new AbstractCityManager.Piece(blockpos, chunkX, chunkZ, cityMap));
 			this.calculateBoundingBox();
 		}
 	}
