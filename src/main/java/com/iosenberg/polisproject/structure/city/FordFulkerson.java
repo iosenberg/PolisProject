@@ -2,7 +2,6 @@ package com.iosenberg.polisproject.structure.city;
 
 import java.awt.Point;
 import java.util.LinkedList;
-import java.util.List;
 
 /*I have no idea where else to put this. It uses FF algorithm to place
  * a city on the given terrain. Might move it into AbstractCityManager or CityStructure later
@@ -28,22 +27,22 @@ public class FordFulkerson {
 				//only adds up and right per block, but works out that all adjacent blocks have a pair of edges
 
 				if(i>0) { //add edge in both directions in direction of -i
-					byte c = (byte)(Byte.MAX_VALUE - 4*Math.abs(mapIn[i][j].x - mapIn[i-1][j].x));
+					byte c = (byte)(Byte.MAX_VALUE - 3*Math.abs(mapIn[i][j].x - mapIn[i-1][j].x));
 					G[i*size + j][(i-1)*size + j] = c;
 					G[(i-1)*size + j][i*size + j] = c;
 				}
 				if(j<size-1) { //add edge in both directions in direction of +j
-					byte c = (byte)(Byte.MAX_VALUE - 4*Math.abs(mapIn[i][j].x - mapIn[i][j+1].x));
+					byte c = (byte)(Byte.MAX_VALUE - 3*Math.abs(mapIn[i][j].x - mapIn[i][j+1].x));
 					G[i*size + j][i*size + j + 1] = c;
 					G[i*size + j + 1][i*size + j] = c;
 				}
 				
 				//adds an edge from source (Likelihood to be in cut A), c = distance from the center
-				G[s][i*size+j] = (byte)(2*size - 2*Math.sqrt((size-i)^2 + (size-j)^2) + 1);
+				G[s][i*size+j] = (byte)(2*size - 2*Math.sqrt((size-i)^2 + (size-j)^2) + 53);
 				
 				//adds an edge to sink (Likelihood to be in cut B (NOT in cut A), c = whether biome matches desired biome
 				//This might be simplified to an edge connecting all vertices with different biomes but that sounds time expensive and for now I just need a capacity B
-				G[i*size+j][t] = (byte)(Math.sqrt((size-i)^2 + (size-j)^2) + (mapIn[i][j].y == biome ? 5 : 60));
+				G[i*size+j][t] = (byte)(2*Math.sqrt((size-i)^2 + (size-j)^2) + (mapIn[i][j].y == biome ? 10 : 70));
 			}
 		}
 		
@@ -160,7 +159,7 @@ public class FordFulkerson {
       // This array is filled by BFS and to store path
       int parent[] = new int[V];
 
-      int max_flow = 0; // There is no flow initially
+//      int max_flow = 0; // There is no flow initially
 
       // Augment the flow while there is path from source
       // to sink
@@ -184,7 +183,7 @@ public class FordFulkerson {
           }
 
           // Add path flow to overall flow
-          max_flow += path_flow;
+//          max_flow += path_flow;
       }
 
       // Return the overall flow
