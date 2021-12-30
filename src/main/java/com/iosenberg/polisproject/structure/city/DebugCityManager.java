@@ -22,10 +22,10 @@ import net.minecraft.world.gen.feature.template.Template;
 import net.minecraft.world.gen.feature.template.TemplateManager;
 
 public class DebugCityManager extends AbstractCityManager{
-	static final ResourceLocation BLOCK = new ResourceLocation(PolisProject.MODID, "block");
-	static final ResourceLocation ROADJUNCTION = new ResourceLocation(PolisProject.MODID, "road_junction");
-	static byte[][] map;
-	static int height;
+	private static final ResourceLocation BLOCK = new ResourceLocation(PolisProject.MODID, "block");
+	private static final ResourceLocation ROADJUNCTION = new ResourceLocation(PolisProject.MODID, "road_junction");
+	private static byte[][] map;
+	private static int height;
 
 	public static byte[][] generateMap(ChunkGenerator generator, int chunkX, int chunkZ) {
 		// TODO Auto-generated method stub
@@ -43,13 +43,13 @@ public class DebugCityManager extends AbstractCityManager{
 	public static void generatePieces(TemplateManager templateManager, BlockPos pos, Rotation rotation,
 			List<StructurePiece> pieceList, Random random) {
 
-		
+		System.out.println("Resource is " + BLOCK.getPath().toString());
 		int size = 5;
 		for(int i = 0-size; i < size+1; i++) {
 			for(int j = 0-size; j < size+1; j++) {
 				int chunki = i * 16;
 				int chunkj = j * 16;
-				pieceList.add(new Piece(templateManager, BLOCK, new BlockPos(pos.getX() + chunki, height, pos.getZ() + chunkj), rotation));
+				pieceList.add(new DebugCityManager.Piece(templateManager, ROADJUNCTION, new BlockPos(pos.getX() + chunki, 70 , pos.getZ() + chunkj), rotation));
 			}
 		}
 		
@@ -61,7 +61,7 @@ public class DebugCityManager extends AbstractCityManager{
 		private Rotation rotation;
 		
 		public Piece(TemplateManager templateManagerIn, ResourceLocation resourceLocationIn, BlockPos pos, Rotation rotationIn) {
-			super(PPStructures.BLOCKPIECE, 0);
+			super(PPStructures.CITY_PIECE, 0);
 			this.resourceLocation = resourceLocationIn;
 			this.templatePosition = new BlockPos(pos.getX(), pos.getY(), pos.getZ());
 			this.rotation = rotationIn;
@@ -69,7 +69,7 @@ public class DebugCityManager extends AbstractCityManager{
 		}
 		
 		public Piece(TemplateManager templateManagerIn, CompoundNBT tagCompound) {
-			super(PPStructures.BLOCKPIECE, tagCompound);
+			super(PPStructures.CITY_PIECE, tagCompound);
 			this.resourceLocation = new ResourceLocation(tagCompound.getString("Template"));
 			this.rotation = Rotation.NONE;//Rotation.valueOf(tagCompound.getString("Rot"));
 			this.setupPiece(templateManagerIn);

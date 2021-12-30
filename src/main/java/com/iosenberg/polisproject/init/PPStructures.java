@@ -27,15 +27,16 @@ public class PPStructures {
 	public static Structure<NoFeatureConfig> ROAD_JUNCTION = new RoadJunctionStructure(NoFeatureConfig.CODEC);
 	public static Structure<NoFeatureConfig> CITY = new CityStructure(NoFeatureConfig.CODEC);
 	public static IStructurePieceType ROAD_JUNCTION_PIECE = RoadJunctionStructurePiece.Piece::new;
-	public static IStructurePieceType CITY_PIECE = AbstractCityManager.Piece::new;
-	
-	public static IStructurePieceType BLOCKPIECE = DebugCityManager.Piece::new;
+	public static IStructurePieceType CITY_PIECE = DebugCityManager.Piece::new;
+	public static Structure<NoFeatureConfig> NEWCITY = new RoadJunctionStructure(NoFeatureConfig.CODEC);
 	
 	public static void registerStructures(Register<Structure<?>> event) {
 		PolisProject.register(event.getRegistry(), ROAD_JUNCTION, "road_junction");
 		registerStructure(ROAD_JUNCTION, new StructureSeparationSettings(15, 7, 70031124), true);
 		PolisProject.register(event.getRegistry(), CITY, "city");
-		registerStructure(CITY, new StructureSeparationSettings(60, 40, 42113007), true); //fix to false for no terrain generation
+		registerStructure(CITY, new StructureSeparationSettings(60, 40, 42113008), true); //fix to false for no terrain generation
+		PolisProject.register(event.getRegistry(), NEWCITY, "newcity");
+		registerStructure(NEWCITY, new StructureSeparationSettings(60, 40, 123456), true);
 		
 		PPStructures.registerAllPieces();
 	}
@@ -60,8 +61,6 @@ public class PPStructures {
 	public static void registerAllPieces() {
 		registerStructurePiece(ROAD_JUNCTION_PIECE, new ResourceLocation(PolisProject.MODID, "road_junction_piece"));
 		registerStructurePiece(CITY_PIECE, new ResourceLocation(PolisProject.MODID, "city_piece"));
-		
-		registerStructurePiece(BLOCKPIECE, new ResourceLocation(PolisProject.MODID, "blockpiece"));
 	}
 	
 	static void registerStructurePiece(IStructurePieceType structurePiece, ResourceLocation rl) {

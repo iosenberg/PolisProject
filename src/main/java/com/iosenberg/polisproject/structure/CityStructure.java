@@ -79,62 +79,66 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 			
 			//Rotation rotation = Rotation.NONE;
 			
-			int x = (chunkX << 4) - 80; //+ 7;
-			int z = (chunkZ << 4) - 80; //+ 7;
-			BiomeProvider biomesource = generator.getBiomeSource();
-//			int y = generator.getBaseHeight(x, z, Heightmap.Type.WORLD_SURFACE);
-			
-			//Generate map. 176
-//			Point[][] cityMap = new Point[176][176];
+//			int x = (chunkX << 4) - 80; //+ 7;
+//			int z = (chunkZ << 4) - 80; //+ 7;
+//			BiomeProvider biomesource = generator.getBiomeSource();
+////			int y = generator.getBaseHeight(x, z, Heightmap.Type.WORLD_SURFACE);
 //			
-//			//iterates by blocks of 4, fills in each point in cityMap with x = height, y = biome?
-//			for (int i = 0; i < 88; i++) {
-//				for (int j = 0; j < 88; j++) {
-//					int xi = x+i*2;
-//					int zj = z+j*2;
-//					int height = generator.getFirstFreeHeight(xi, zj, Heightmap.Type.WORLD_SURFACE);
-//					int biome = biomeMap.get(generator.getBiomeSource().getNoiseBiome(x/4+i/2, height, z/4+j/2).getBiomeCategory().toString());
-//					cityMap[i*2][j*2] = new Point(height, biome);
-//					cityMap[i*2+1][j*2] = new Point(height, biome);
-//					cityMap[i*2][j*2+1] = new Point(height, biome);
-//					cityMap[i*2+1][j*2+1] = new Point(height, biome);
+//			//Generate map. 176
+////			Point[][] cityMap = new Point[176][176];
+////			
+////			//iterates by blocks of 4, fills in each point in cityMap with x = height, y = biome?
+////			for (int i = 0; i < 88; i++) {
+////				for (int j = 0; j < 88; j++) {
+////					int xi = x+i*2;
+////					int zj = z+j*2;
+////					int height = generator.getFirstFreeHeight(xi, zj, Heightmap.Type.WORLD_SURFACE);
+////					int biome = biomeMap.get(generator.getBiomeSource().getNoiseBiome(x/4+i/2, height, z/4+j/2).getBiomeCategory().toString());
+////					cityMap[i*2][j*2] = new Point(height, biome);
+////					cityMap[i*2+1][j*2] = new Point(height, biome);
+////					cityMap[i*2][j*2+1] = new Point(height, biome);
+////					cityMap[i*2+1][j*2+1] = new Point(height, biome);
+////				}
+////			}
+//			
+//			
+//		//Generate map. 88
+//			Point[][] shityMap = new Point[44][44];
+//			int[] heightModeList = new int[120];
+//			int[] biomeModeList = new int[17];
+//			for (int i = 0; i < 44; i++) {
+//				for (int j = 0; j < 44; j++) {
+//					int height = generator.getFirstFreeHeight(x+i*4, z+j*4, Heightmap.Type.WORLD_SURFACE);
+//					int biome = biomeMap.get(biomesource.getNoiseBiome(x/4+i, height, z/4+j).getBiomeCategory().toString());
+//					shityMap[i][j] = new Point(height, biome);
+//					biomeModeList[biome]++;
+//					heightModeList[height]++;
 //				}
 //			}
+//			
+//			int heightModeIndex = 0;
+//			for(int i=0;i<heightModeList.length;i++) if (heightModeList[i] > heightModeList[heightModeIndex]) heightModeIndex = i;
+//			
+//			int biomeModeIndex = 0;
+//			for(int i=0;i<biomeModeList.length;i++) if (biomeModeList[i] > biomeModeList[biomeModeIndex]) biomeModeIndex = i;
+//			
+////			byte[][] cityMap = FordFulkerson.placeCity(shityMap, 0);
+//			
+//			//Add pieces function???? Figure this out later
+////			PolisProject.LOGGER.log(Level.DEBUG, "Biome is " + biomeIn.getBiomeCategory().toString() + ", " + generator.getBiomeSource().getNoiseBiome(x >> 2, y, z >> 2).getBiomeCategory().toString());
+////			PolisProject.LOGGER.log(Level.DEBUG, "So the number I'm passing in is " + biomeMap.get(biomeIn.getBiomeCategory().toString()));
+////			this.pieces.add(new AbstractCityManager.Piece(templateManagerIn, x, y, z, biomeMap.get(biomeIn.getBiomeCategory().toString())));
+////			this.pieces.add(new AbstractCityManager.Piece(new BlockPos(x,y,z), chunkX, chunkZ, map));//CityHashMap.get(chunkX, chunkZ)));
+//
+//			x += 87;
+//			z += 87;
+//			BlockPos blockpos = new BlockPos(x, generator.getFirstFreeHeight(x, z, Heightmap.Type.WORLD_SURFACE), z);
+//			DebugCityManager.height(heightModeIndex);
 			
-			
-		//Generate map. 88
-			Point[][] shityMap = new Point[44][44];
-			int[] heightModeList = new int[120];
-			int[] biomeModeList = new int[17];
-			for (int i = 0; i < 44; i++) {
-				for (int j = 0; j < 44; j++) {
-					int height = generator.getFirstFreeHeight(x+i*4, z+j*4, Heightmap.Type.WORLD_SURFACE);
-					int biome = biomeMap.get(biomesource.getNoiseBiome(x/4+i, height, z/4+j).getBiomeCategory().toString());
-					shityMap[i][j] = new Point(height, biome);
-					biomeModeList[biome]++;
-					heightModeList[height]++;
-				}
-			}
-			
-			int heightModeIndex = 0;
-			for(int i=0;i<heightModeList.length;i++) if (heightModeList[i] > heightModeList[heightModeIndex]) heightModeIndex = i;
-			
-			int biomeModeIndex = 0;
-			for(int i=0;i<biomeModeList.length;i++) if (biomeModeList[i] > biomeModeList[biomeModeIndex]) biomeModeIndex = i;
-			
-//			byte[][] cityMap = FordFulkerson.placeCity(shityMap, 0);
-			
-			//Add pieces function???? Figure this out later
-//			PolisProject.LOGGER.log(Level.DEBUG, "Biome is " + biomeIn.getBiomeCategory().toString() + ", " + generator.getBiomeSource().getNoiseBiome(x >> 2, y, z >> 2).getBiomeCategory().toString());
-//			PolisProject.LOGGER.log(Level.DEBUG, "So the number I'm passing in is " + biomeMap.get(biomeIn.getBiomeCategory().toString()));
-//			this.pieces.add(new AbstractCityManager.Piece(templateManagerIn, x, y, z, biomeMap.get(biomeIn.getBiomeCategory().toString())));
-//			this.pieces.add(new AbstractCityManager.Piece(new BlockPos(x,y,z), chunkX, chunkZ, map));//CityHashMap.get(chunkX, chunkZ)));
-
-			x += 87;
-			z += 87;
-			BlockPos blockpos = new BlockPos(x, generator.getFirstFreeHeight(x, z, Heightmap.Type.WORLD_SURFACE), z);
-			DebugCityManager.height(heightModeIndex);
-			DebugCityManager.generatePieces(templateManagerIn, blockpos, Rotation.NONE, this.pieces, random);
+			int x = chunkX << 4;
+			int z = chunkZ << 4;
+			int y = generator.getBaseHeight(x, z, Heightmap.Type.WORLD_SURFACE);
+			DebugCityManager.generatePieces(templateManagerIn, new BlockPos(x, y, z), Rotation.NONE, this.pieces, random);
 //			this.pieces.add(new AbstractCityManager.Piece(blockpos, chunkX, chunkZ, cityMap));
 			this.calculateBoundingBox();
 		}
