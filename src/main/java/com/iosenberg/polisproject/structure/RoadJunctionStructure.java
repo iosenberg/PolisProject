@@ -37,6 +37,10 @@ public class RoadJunctionStructure extends Structure<NoFeatureConfig>{
 	protected boolean isFeatureChunk(ChunkGenerator generator, BiomeProvider biomeProviderIn, long seed,
 			SharedSeedRandom seedRand, int chunkX, int chunkZ, Biome biomeIn, ChunkPos chunkPos,
 			NoFeatureConfig config) {
+		ChunkPos cityChunk = Structure.VILLAGE.getPotentialFeatureChunk(generator.getSettings().getConfig(Structure.VILLAGE), seed, seedRand, chunkX, chunkZ);
+		if(Math.sqrt((cityChunk.x - chunkX)^2 + (cityChunk.z - chunkZ)^2) < 40) return false;
+		String biome = biomeIn.getBiomeCategory().toString();
+		if(biome.equals("OCEAN") || biome.equals("EXTREME_HILLS")) return false;
 		//check to make sure not too close to city or village
 		//check to make sure not in illegal biome, like ocean or river (or mountain?)
 		return true;

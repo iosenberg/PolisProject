@@ -9,9 +9,11 @@ import com.google.common.collect.ImmutableMap;
 import com.iosenberg.polisproject.PolisProject;
 import com.iosenberg.polisproject.structure.city.AbstractCityManager;
 import com.iosenberg.polisproject.structure.city.AbstractCityManager.Piece;
+import com.iosenberg.polisproject.structure.city.DebugCityManager;
 import com.iosenberg.polisproject.structure.city.FordFulkerson;
 import com.mojang.serialization.Codec;
 
+import net.minecraft.util.Rotation;
 import net.minecraft.util.SharedSeedRandom;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
@@ -34,6 +36,7 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 			.put("TAIGA", 1).put("EXTREME_HILLS", 2).put("JUNGLE", 3).put("MESA", 4).put("PLAINS", 5).put("SAVANNA", 6)
 			.put("ICY", 7).put("THE_END", 8).put("BEACH", 9).put("FOREST", 10).put("OCEAN", 11).put("DESERT", 12)
 			.put("RIVER", 13).put("SWAMP", 14).put("MUSHROOM", 15).put("NETHER", 16).build();
+	private static boolean[][] cityMap;
 
 	public CityStructure(Codec<NoFeatureConfig> codec) {
 		super(codec);
@@ -54,6 +57,9 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 	protected boolean isFeatureChunk(ChunkGenerator generator, BiomeProvider biomeProviderIn, long seed,
 			SharedSeedRandom seedRand, int chunkX, int chunkZ, Biome biomeIn, ChunkPos chunkPos,
 			NoFeatureConfig config) {
+		ChunkPos villageChunk = Structure.VILLAGE.getPotentialFeatureChunk(generator.getSettings().getConfig(Structure.VILLAGE), seed, seedRand, chunkX, chunkZ);
+		if(Math.sqrt((villageChunk.x - chunkX)^2 + (villageChunk.z - chunkZ)^2) < 19) return false; //19 is the number required for the radius to contain all of the city's borders
+		
 		//maybe check standard deviation of the height of blocks????
 		//Also make sure it doesn't spawn too close to a village, or anything else that might cause a big overlap
 		if (biomeIn.getBiomeCategory().toString().equals("DESERT")) return true;
@@ -98,6 +104,7 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 			
 		//Generate map. 88
 			Point[][] shityMap = new Point[44][44];
+			int[] heightModeList = new int[120];
 			int[] biomeModeList = new int[17];
 			for (int i = 0; i < 44; i++) {
 				for (int j = 0; j < 44; j++) {
@@ -105,13 +112,17 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 					int biome = biomeMap.get(biomesource.getNoiseBiome(x/4+i, height, z/4+j).getBiomeCategory().toString());
 					shityMap[i][j] = new Point(height, biome);
 					biomeModeList[biome]++;
+					heightModeList[height]++;
 				}
 			}
+			
+			int heightModeIndex = 0;
+			for(int i=0;i<heightModeList.length;i++) if (heightModeList[i] > heightModeList[heightModeIndex]) heightModeIndex = i;
 			
 			int biomeModeIndex = 0;
 			for(int i=0;i<biomeModeList.length;i++) if (biomeModeList[i] > biomeModeList[biomeModeIndex]) biomeModeIndex = i;
 			
-			byte[][] cityMap = FordFulkerson.placeCity(shityMap, biomeModeIndex);
+//			byte[][] cityMap = FordFulkerson.placeCity(shityMap, 0);
 			
 			//Add pieces function???? Figure this out later
 //			PolisProject.LOGGER.log(Level.DEBUG, "Biome is " + biomeIn.getBiomeCategory().toString() + ", " + generator.getBiomeSource().getNoiseBiome(x >> 2, y, z >> 2).getBiomeCategory().toString());
@@ -122,7 +133,9 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 			x += 87;
 			z += 87;
 			BlockPos blockpos = new BlockPos(x, generator.getFirstFreeHeight(x, z, Heightmap.Type.WORLD_SURFACE), z);
-			this.pieces.add(new AbstractCityManager.Piece(blockpos, chunkX, chunkZ, cityMap));
+			DebugCityManager.height(heightModeIndex);
+			DebugCityManager.generatePieces(templateManagerIn, blockpos, Rotation.NONE, this.pieces, random);
+//			this.pieces.add(new AbstractCityManager.Piece(blockpos, chunkX, chunkZ, cityMap));
 			this.calculateBoundingBox();
 		}
 	}

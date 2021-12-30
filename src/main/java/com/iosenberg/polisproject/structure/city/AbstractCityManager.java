@@ -1,6 +1,7 @@
 package com.iosenberg.polisproject.structure.city;
 
 import java.awt.Point;
+import java.util.List;
 import java.util.Random;
 
 import org.apache.logging.log4j.Level;
@@ -11,6 +12,7 @@ import com.iosenberg.polisproject.init.PPStructures;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.util.Rotation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.MutableBoundingBox;
@@ -23,9 +25,9 @@ import net.minecraft.world.gen.feature.template.TemplateManager;
 
 public abstract class AbstractCityManager {
 	
-	public abstract byte[][] generateMap(ChunkGenerator generator, int chunkX, int chunkZ);
+//	public abstract byte[][] generateMap(ChunkGenerator generator, int chunkX, int chunkZ);
 	
-	public abstract int generatePieces();
+//	public abstract void generatePieces(TemplateManager templateManager, BlockPos pos, Rotation rotation, List<StructurePiece> pieceList, Random random);
 	
 	//CityPiece, which is inherited by all city managers
 	public static class Piece extends StructurePiece {

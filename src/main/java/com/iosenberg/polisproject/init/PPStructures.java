@@ -7,6 +7,7 @@ import com.iosenberg.polisproject.structure.CityStructure;
 import com.iosenberg.polisproject.structure.RoadJunctionStructure;
 import com.iosenberg.polisproject.structure.RoadJunctionStructurePiece;
 import com.iosenberg.polisproject.structure.city.AbstractCityManager;
+import com.iosenberg.polisproject.structure.city.DebugCityManager;
 
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.registry.Registry;
@@ -28,11 +29,13 @@ public class PPStructures {
 	public static IStructurePieceType ROAD_JUNCTION_PIECE = RoadJunctionStructurePiece.Piece::new;
 	public static IStructurePieceType CITY_PIECE = AbstractCityManager.Piece::new;
 	
+	public static IStructurePieceType BLOCKPIECE = DebugCityManager.Piece::new;
+	
 	public static void registerStructures(Register<Structure<?>> event) {
 		PolisProject.register(event.getRegistry(), ROAD_JUNCTION, "road_junction");
 		registerStructure(ROAD_JUNCTION, new StructureSeparationSettings(15, 7, 70031124), true);
 		PolisProject.register(event.getRegistry(), CITY, "city");
-		registerStructure(CITY, new StructureSeparationSettings(60, 40, 42113007), false);
+		registerStructure(CITY, new StructureSeparationSettings(60, 40, 42113007), true); //fix to false for no terrain generation
 		
 		PPStructures.registerAllPieces();
 	}
@@ -57,6 +60,8 @@ public class PPStructures {
 	public static void registerAllPieces() {
 		registerStructurePiece(ROAD_JUNCTION_PIECE, new ResourceLocation(PolisProject.MODID, "road_junction_piece"));
 		registerStructurePiece(CITY_PIECE, new ResourceLocation(PolisProject.MODID, "city_piece"));
+		
+		registerStructurePiece(BLOCKPIECE, new ResourceLocation(PolisProject.MODID, "blockpiece"));
 	}
 	
 	static void registerStructurePiece(IStructurePieceType structurePiece, ResourceLocation rl) {
