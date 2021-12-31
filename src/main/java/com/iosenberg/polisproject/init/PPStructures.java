@@ -4,6 +4,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.iosenberg.polisproject.PolisProject;
 import com.iosenberg.polisproject.structure.CityStructure;
+import com.iosenberg.polisproject.structure.NewCityStructure;
+import com.iosenberg.polisproject.structure.NewCityStructurePiece;
 import com.iosenberg.polisproject.structure.RoadJunctionStructure;
 import com.iosenberg.polisproject.structure.RoadJunctionStructurePiece;
 import com.iosenberg.polisproject.structure.city.AbstractCityManager;
@@ -28,15 +30,16 @@ public class PPStructures {
 	public static Structure<NoFeatureConfig> CITY = new CityStructure(NoFeatureConfig.CODEC);
 	public static IStructurePieceType ROAD_JUNCTION_PIECE = RoadJunctionStructurePiece.Piece::new;
 	public static IStructurePieceType CITY_PIECE = DebugCityManager.Piece::new;
-	public static Structure<NoFeatureConfig> NEWCITY = new RoadJunctionStructure(NoFeatureConfig.CODEC);
+	public static Structure<NoFeatureConfig> NEWCITY = new NewCityStructure(NoFeatureConfig.CODEC);
+	public static IStructurePieceType NEWCITYPIECE = NewCityStructurePiece.Piece::new;
 	
 	public static void registerStructures(Register<Structure<?>> event) {
 		PolisProject.register(event.getRegistry(), ROAD_JUNCTION, "road_junction");
 		registerStructure(ROAD_JUNCTION, new StructureSeparationSettings(15, 7, 70031124), true);
 		PolisProject.register(event.getRegistry(), CITY, "city");
-		registerStructure(CITY, new StructureSeparationSettings(60, 40, 42113008), true); //fix to false for no terrain generation
+		registerStructure(CITY, new StructureSeparationSettings(60, 40, 2352352), true); //fix to false for no terrain generation
 		PolisProject.register(event.getRegistry(), NEWCITY, "newcity");
-		registerStructure(NEWCITY, new StructureSeparationSettings(60, 40, 123456), true);
+		registerStructure(NEWCITY, new StructureSeparationSettings(60, 40, 348282487), true);
 		
 		PPStructures.registerAllPieces();
 	}
@@ -61,6 +64,7 @@ public class PPStructures {
 	public static void registerAllPieces() {
 		registerStructurePiece(ROAD_JUNCTION_PIECE, new ResourceLocation(PolisProject.MODID, "road_junction_piece"));
 		registerStructurePiece(CITY_PIECE, new ResourceLocation(PolisProject.MODID, "city_piece"));
+		registerStructurePiece(NEWCITYPIECE, new ResourceLocation(PolisProject.MODID, "newcitypiece"));
 	}
 	
 	static void registerStructurePiece(IStructurePieceType structurePiece, ResourceLocation rl) {

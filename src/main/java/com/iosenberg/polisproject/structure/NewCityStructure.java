@@ -16,16 +16,17 @@ import net.minecraft.world.gen.Heightmap;
 import net.minecraft.world.gen.feature.NoFeatureConfig;
 import net.minecraft.world.gen.feature.structure.Structure;
 import net.minecraft.world.gen.feature.structure.StructureStart;
+import net.minecraft.world.gen.feature.structure.Structure.IStartFactory;
 import net.minecraft.world.gen.feature.template.TemplateManager;
 
-public class RoadJunctionStructure extends Structure<NoFeatureConfig>{
-	public RoadJunctionStructure(Codec<NoFeatureConfig> codec) {
+public class NewCityStructure extends Structure<NoFeatureConfig>{
+	public NewCityStructure(Codec<NoFeatureConfig> codec) {
 		super(codec);
 	}
 	
 	@Override
 	public IStartFactory<NoFeatureConfig> getStartFactory() {
-		return RoadJunctionStructure.Start::new;
+		return NewCityStructure.Start::new;
 	}
 	
 	@Override
@@ -61,8 +62,8 @@ public class RoadJunctionStructure extends Structure<NoFeatureConfig>{
 			int z = (chunkZ << 4) + 7;
 			int y = generator.getBaseHeight(x, z, Heightmap.Type.WORLD_SURFACE_WG);
 			BlockPos blockpos = new BlockPos(x, y, z);
-			
-			RoadJunctionStructurePiece.start(templateManagerIn, blockpos, rotation, this.pieces, this.random);
+			System.out.println("Hello????");
+			NewCityStructurePiece.start(templateManagerIn, blockpos, rotation, this.pieces, this.random);
 			
 			this.calculateBoundingBox();
 			

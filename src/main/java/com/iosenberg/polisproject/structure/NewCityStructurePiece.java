@@ -1,13 +1,11 @@
-package com.iosenberg.polisproject.structure.city;
+package com.iosenberg.polisproject.structure;
 
 import java.util.List;
 import java.util.Random;
 
 import com.iosenberg.polisproject.PolisProject;
 import com.iosenberg.polisproject.init.PPStructures;
-import com.iosenberg.polisproject.structure.RoadJunctionStructurePiece;
 
-import net.minecraft.block.Blocks;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.Mirror;
 import net.minecraft.util.ResourceLocation;
@@ -15,67 +13,42 @@ import net.minecraft.util.Rotation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.MutableBoundingBox;
-import net.minecraft.world.ISeedReader;
 import net.minecraft.world.IServerWorld;
-import net.minecraft.world.gen.ChunkGenerator;
-import net.minecraft.world.gen.feature.structure.StructureManager;
 import net.minecraft.world.gen.feature.structure.StructurePiece;
 import net.minecraft.world.gen.feature.structure.TemplateStructurePiece;
 import net.minecraft.world.gen.feature.template.PlacementSettings;
 import net.minecraft.world.gen.feature.template.Template;
 import net.minecraft.world.gen.feature.template.TemplateManager;
 
-public class DebugCityManager extends AbstractCityManager{
-	private static final ResourceLocation BLOCK = new ResourceLocation(PolisProject.MODID, "block");
-	private static final ResourceLocation ROADJUNCTION = new ResourceLocation(PolisProject.MODID, "road_junction");
-	private static byte[][] map;
-	private static int height;
-
-	public static byte[][] generateMap(ChunkGenerator generator, int chunkX, int chunkZ) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+public class NewCityStructurePiece {
+	private static final ResourceLocation NEWCITYBLOCK = new ResourceLocation(PolisProject.MODID, "block");
 	
-	public static void map(byte[][] mapIn) {
-		map = mapIn;
-	}
-	
-	public static void height(int H) {
-		height = H;
-	}
-
-	public static void generatePieces(TemplateManager templateManager, BlockPos pos, Rotation rotation,
-			List<StructurePiece> pieceList, Random random) {
-
+	public static void start(TemplateManager templateManager, BlockPos pos, Rotation rotation, List<StructurePiece> pieceList, Random random) {
 		int size = 5;
 		for(int i = 0-size; i < size+1; i++) {
 			for(int j = 0-size; j < size+1; j++) {
 				int chunki = i * 16;
 				int chunkj = j * 16;
-				pieceList.add(new DebugCityManager.Piece(templateManager, BLOCK, new BlockPos(pos.getX() + chunki, pos.getY() , pos.getZ() + chunkj), rotation));
+				pieceList.add(new NewCityStructurePiece.Piece(templateManager, NEWCITYBLOCK, new BlockPos(pos.getX() + chunki, pos.getY(), pos.getZ() + chunkj), rotation));
 			}
 		}
-		
+			
 	}
-
-	//quick fix. need to put this somewhere else
+	
 	public static class Piece extends TemplateStructurePiece {
 		private ResourceLocation resourceLocation;
 		private Rotation rotation;
 		
 		public Piece(TemplateManager templateManagerIn, ResourceLocation resourceLocationIn, BlockPos pos, Rotation rotationIn) {
-			super(PPStructures.CITY_PIECE, 0);
-//			this.boundingBox = new MutableBoundingBox(pos.getX()-90, pos.getY()-30, pos.getZ()-90,
-//					pos.getX() + 90, pos.getY()+30, pos.getZ() + 90);
+			super(PPStructures.NEWCITYPIECE, 0);
 			this.resourceLocation = resourceLocationIn;
 			this.templatePosition = new BlockPos(pos.getX(), pos.getY(), pos.getZ());
 			this.rotation = rotationIn;
 			this.setupPiece(templateManagerIn);
-			
 		}
 		
 		public Piece(TemplateManager templateManagerIn, CompoundNBT tagCompound) {
-			super(PPStructures.CITY_PIECE, tagCompound);
+			super(PPStructures.NEWCITYPIECE, tagCompound);
 			this.resourceLocation = new ResourceLocation(tagCompound.getString("Template"));
 			this.rotation = Rotation.NONE;//Rotation.valueOf(tagCompound.getString("Rot"));
 			this.setupPiece(templateManagerIn);
@@ -98,18 +71,6 @@ public class DebugCityManager extends AbstractCityManager{
 				MutableBoundingBox sbb) {
 			// TODO Auto-generated method stub
 			
-		}
-		
-		@Override
-		public boolean postProcess(ISeedReader worldIn, StructureManager structureManager,
-				ChunkGenerator chunkGenerator, Random rand, MutableBoundingBox mbb, ChunkPos chunkPos,
-				BlockPos blockPos) {
-			
-//			for(int i = 0; i < 80; i++) 
-//				this.placeBlock(worldIn, Blocks.ACACIA_PLANKS.defaultBlockState(), blockPos.getX(), i, blockPos.getZ(), this.boundingBox);
-//			
-//			return true;
-			return false;
 		}
 	}
 }

@@ -70,12 +70,14 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 		public Start(Structure<NoFeatureConfig> structureIn, int chunkX, int chunkZ,
 				MutableBoundingBox mutableBoundingBox, int referenceIn, long seedIn) {
 			super(structureIn, chunkX, chunkZ, mutableBoundingBox, referenceIn, seedIn);
+			this.boundingBox = mutableBoundingBox;
 		}
 		
 		//Need to rewrite
 		@Override
 		public void generatePieces(DynamicRegistries dynamicRegistryManager, ChunkGenerator generator,
 				TemplateManager templateManagerIn, int chunkX, int chunkZ, Biome biomeIn, NoFeatureConfig config) {
+			
 			
 			//Rotation rotation = Rotation.NONE;
 			
@@ -122,7 +124,7 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 //			int biomeModeIndex = 0;
 //			for(int i=0;i<biomeModeList.length;i++) if (biomeModeList[i] > biomeModeList[biomeModeIndex]) biomeModeIndex = i;
 //			
-////			byte[][] cityMap = FordFulkerson.placeCity(shityMap, 0);
+//			byte[][] cityMap = FordFulkerson.placeCity(shityMap, 0);
 //			
 //			//Add pieces function???? Figure this out later
 ////			PolisProject.LOGGER.log(Level.DEBUG, "Biome is " + biomeIn.getBiomeCategory().toString() + ", " + generator.getBiomeSource().getNoiseBiome(x >> 2, y, z >> 2).getBiomeCategory().toString());
@@ -140,7 +142,12 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 			int y = generator.getBaseHeight(x, z, Heightmap.Type.WORLD_SURFACE);
 			DebugCityManager.generatePieces(templateManagerIn, new BlockPos(x, y, z), Rotation.NONE, this.pieces, random);
 //			this.pieces.add(new AbstractCityManager.Piece(blockpos, chunkX, chunkZ, cityMap));
+			
 			this.calculateBoundingBox();
+			
+			System.out.println("Bounding box of first piece: ");
+			System.out.println(this.pieces.get(0).getBoundingBox().toString());
+			
 		}
 	}
 }
