@@ -12,9 +12,6 @@ import net.minecraft.world.gen.feature.StructureFeature;
 public class PPConfiguredStructures {
 	public static StructureFeature<?,?> CONFIGURED_ROAD_JUNCTION = PPStructures.ROAD_JUNCTION.configured(IFeatureConfig.NONE);
 	public static StructureFeature<?,?> CONFIGURED_CITY = PPStructures.CITY.configured(IFeatureConfig.NONE);
-	
-	public static StructureFeature<?,?> CONFIGURED_NEWCITY = PPStructures.NEWCITY.configured(IFeatureConfig.NONE);
-	
 //	public static ConfiguredFeature<?,?> CONFIGURED_ROAD_FEATURE = PolisStructures.ROAD_FEATURE.configured(IFeatureConfig.NONE);
 	
 	public static void registerConfiguredStructures() {		
@@ -22,12 +19,8 @@ public class PPConfiguredStructures {
 		
 		Registry.register(registry, new ResourceLocation(PolisProject.MODID, "configured_road_junction"),  CONFIGURED_ROAD_JUNCTION);
 		Registry.register(registry, new ResourceLocation(PolisProject.MODID, "configured_city"), CONFIGURED_CITY);
-		Registry.register(registry, new ResourceLocation(PolisProject.MODID, "configured_newcity"),  CONFIGURED_NEWCITY);
-
 		
 		FlatGenerationSettings.STRUCTURE_FEATURES.put(PPStructures.ROAD_JUNCTION, CONFIGURED_ROAD_JUNCTION);
 		FlatGenerationSettings.STRUCTURE_FEATURES.put(PPStructures.CITY, CONFIGURED_CITY);
-		FlatGenerationSettings.STRUCTURE_FEATURES.put(PPStructures.NEWCITY, CONFIGURED_NEWCITY);
-
 	}
 }

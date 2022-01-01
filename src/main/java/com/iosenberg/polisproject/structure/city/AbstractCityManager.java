@@ -74,7 +74,8 @@ public abstract class AbstractCityManager {
 		
 		//all of these can be static for now, but I will NEED to store them elsewhere before seriously building this mod
 		public static int biome;
-		private static byte[][][][] map = new byte[11][11][16][16]; //maybe use a custom class instead of point?
+		public static int height;
+		private static boolean[][][][] map = new boolean[11][11][16][16]; //maybe use a custom class instead of point?
 		private static int chunkX;
 		private static int chunkZ;
 		
@@ -93,7 +94,7 @@ public abstract class AbstractCityManager {
 		}
 		
 		//Constructor for map
-		public Piece(BlockPos blockPos, int chunkXin, int chunkZin, byte[][] mapIn) {
+		public Piece(BlockPos blockPos, int chunkXin, int chunkZin, boolean[][] mapIn, int heightIn) {
 			super(PPStructures.CITY_PIECE, 0);
 			this.boundingBox = new MutableBoundingBox(blockPos.getX()-90, blockPos.getY()-30, blockPos.getZ()-90,
 					blockPos.getX() + 90, blockPos.getY()+30, blockPos.getZ() + 90);
@@ -107,6 +108,8 @@ public abstract class AbstractCityManager {
 					map[i/16][j/16][i%16][j%16] = mapIn[i][j];
 				}
 			}
+			
+			height = heightIn;
 		}
 		@Override
 		protected void addAdditionalSaveData(CompoundNBT tagCompound) {
@@ -132,15 +135,20 @@ public abstract class AbstractCityManager {
 							for(int l=0;l<16;l++) {
 //								int y = map[i][j][k][l].x + 5;
 //								BlockState color = biomeColorMap[map[i][j][k][l].y];
-
-								int y = map[i][j][k][l];
-								BlockState color = indexColorMap[y != 5 ? 14 : 0];
+								if(map[i][j][k][l]) {
+									int y = chunkGenerator.getFirstFreeHeight(x+k, z+l, Heightmap.Type.OCEAN_FLOOR);//map[i][j][k][l];
+									BlockState color = indexColorMap[y != 5 ? 14 : 0];
 								
-								this.placeBlock(worldIn, color, x+k, y-1, z+l, this.boundingBox);
-								if(y>50)
-									for(int m=0;m<worldIn.getHeight(Heightmap.Type.MOTION_BLOCKING, x+k, z+l);m++) 
-									this.placeBlock(worldIn, Blocks.AIR.defaultBlockState(), x+k, y+m, z+l, this.boundingBox);
-								
+									for(int m = y; m < height; m++) 
+										this.placeBlock(worldIn, Blocks.SAND.defaultBlockState(), x+k, m, z+l, this.boundingBox);
+									for(int m = height; m < y; m++) 
+										this.placeBlock(worldIn, Blocks.AIR.defaultBlockState(), x+k, m, z+l, this.boundingBox);
+									
+//									this.placeBlock(worldIn, color, x+k, y-1, z+l, this.boundingBox);
+//									if(y>50)
+//										for(int m=0;m<worldIn.getHeight(Heightmap.Type.MOTION_BLOCKING, x+k, z+l);m++) 
+//											this.placeBlock(worldIn, Blocks.AIR.defaultBlockState(), x+k, y+m, z+l, this.boundingBox);
+								}
 							}
 						}
 						

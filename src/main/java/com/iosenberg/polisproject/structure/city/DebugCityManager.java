@@ -65,19 +65,17 @@ public class DebugCityManager extends AbstractCityManager{
 		
 		public Piece(TemplateManager templateManagerIn, ResourceLocation resourceLocationIn, BlockPos pos, Rotation rotationIn) {
 			super(PPStructures.CITY_PIECE, 0);
-//			this.boundingBox = new MutableBoundingBox(pos.getX()-90, pos.getY()-30, pos.getZ()-90,
-//					pos.getX() + 90, pos.getY()+30, pos.getZ() + 90);
 			this.resourceLocation = resourceLocationIn;
-			this.templatePosition = new BlockPos(pos.getX(), pos.getY(), pos.getZ());
+			BlockPos blockpos = new BlockPos(0,1,0);//UndergroundVillagePieces.OFFSET.get(resourceLocation);
+			this.templatePosition = pos.offset(blockpos.getX(), blockpos.getY(), blockpos.getZ());
 			this.rotation = rotationIn;
 			this.setupPiece(templateManagerIn);
-			
 		}
 		
 		public Piece(TemplateManager templateManagerIn, CompoundNBT tagCompound) {
 			super(PPStructures.CITY_PIECE, tagCompound);
 			this.resourceLocation = new ResourceLocation(tagCompound.getString("Template"));
-			this.rotation = Rotation.NONE;//Rotation.valueOf(tagCompound.getString("Rot"));
+			this.rotation = Rotation.valueOf(tagCompound.getString("Rot"));
 			this.setupPiece(templateManagerIn);
 		}
 		
@@ -87,29 +85,25 @@ public class DebugCityManager extends AbstractCityManager{
 			this.setup(template, this.templatePosition, placementsettings);
 		}
 		
-		protected void readAdditionalSaveData(CompoundNBT tagCompound) {
+		@Override
+		protected void addAdditionalSaveData(CompoundNBT tagCompound) {
 			super.addAdditionalSaveData(tagCompound);
-			tagCompound.putString("Template", this.resourceLocation.toString());;
+			tagCompound.putString("Template",  this.resourceLocation.toString());;
 			tagCompound.putString("Rot", this.rotation.name());
 		}
 
 		@Override
 		protected void handleDataMarker(String function, BlockPos pos, IServerWorld worldIn, Random rand,
 				MutableBoundingBox sbb) {
-			// TODO Auto-generated method stub
-			
-		}
-		
-		@Override
-		public boolean postProcess(ISeedReader worldIn, StructureManager structureManager,
-				ChunkGenerator chunkGenerator, Random rand, MutableBoundingBox mbb, ChunkPos chunkPos,
-				BlockPos blockPos) {
-			
-//			for(int i = 0; i < 80; i++) 
-//				this.placeBlock(worldIn, Blocks.ACACIA_PLANKS.defaultBlockState(), blockPos.getX(), i, blockPos.getZ(), this.boundingBox);
-//			
-//			return true;
-			return false;
+//          if ("chest".equals(function)) {
+//          worldIn.setBlockState(pos, Blocks.CHEST.getDefaultState(), 2);
+//          TileEntity tileentity = worldIn.getTileEntity(pos);
+//
+//          // Just another check to make sure everything is going well before we try to set the chest.
+//          if (tileentity instanceof ChestTileEntity) {
+//              // ((ChestTileEntity) tileentity).setLootTable(<resource_location_to_loottable>, rand.nextLong());
+//          }
+//      }
 		}
 	}
 }
