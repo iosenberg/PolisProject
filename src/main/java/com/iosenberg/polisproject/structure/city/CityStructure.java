@@ -219,6 +219,7 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 		
 		byte[][] islandMap = new byte[44][44];
 		LinkedList<Integer> islandSizeList = new LinkedList<Integer>();
+		islandSizeList.add(0); //since the first island is labeled 1
 		byte islandCounter = 1;
 		marked = new boolean[44][44];
 		
@@ -230,6 +231,7 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 					while(!queue.isEmpty()) {
 						Point p = queue.poll();
 						islandMap[p.x][p.y] = islandCounter;
+						size++;
 						if(p.x != 0 && !marked[p.x-1][p.y] && !smallcityMap[p.x-1][p.y]) {
 							queue.add(new Point(p.x-1,p.y)); 
 							marked[p.x-1][p.y] = true; 
@@ -246,7 +248,6 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 							queue.add(new Point(p.x,p.y+1));
 							marked[p.x][p.y+1] = true;
 						}
-						size++;
 					}
 					islandSizeList.add(size);
 					islandCounter++;
@@ -269,13 +270,15 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 						maxSizeIndex = i;
 		
 		//If island is not large enough, returns false: no city
-		if(islandSizeList.get(maxSizeIndex) < 5) return false;
+		if(islandSizeList.get(maxSizeIndex) < 500) return false;
 		
 		//Sets all cells not in the island to true;
 		for(int i = 0; i < 44; i++)
 			for(int j = 0; j < 44; j++)
 				if(!smallcityMap[i][j] && islandMap[i][j] != maxSizeIndex)
 					smallcityMap[i][j] = true;
+		
+		System.out.println("Choosing island " + maxSizeIndex + " which has size " + islandSizeList.get(maxSizeIndex));
 		
 		System.out.println("Step 3:");
 		for(int i = 0; i < 44; i++) {
