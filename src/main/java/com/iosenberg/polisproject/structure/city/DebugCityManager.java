@@ -28,7 +28,7 @@ import net.minecraft.world.gen.feature.template.TemplateManager;
 public class DebugCityManager extends AbstractCityManager{
 	private static final ResourceLocation BLOCK = new ResourceLocation(PolisProject.MODID, "block");
 	private static final ResourceLocation ROADJUNCTION = new ResourceLocation(PolisProject.MODID, "road_junction");
-	private static byte[][] map;
+	private static boolean[][] map;
 	private static int height;
 
 	public static byte[][] generateMap(ChunkGenerator generator, int chunkX, int chunkZ) {
@@ -36,7 +36,7 @@ public class DebugCityManager extends AbstractCityManager{
 		return null;
 	}
 	
-	public static void map(byte[][] mapIn) {
+	public static void map(boolean[][] mapIn) {
 		map = mapIn;
 	}
 	
@@ -48,14 +48,16 @@ public class DebugCityManager extends AbstractCityManager{
 			List<StructurePiece> pieceList, Random random) {
 
 		int size = 5;
-		for(int i = 0-size; i < size+1; i++) {
-			for(int j = 0-size; j < size+1; j++) {
-				int chunki = i * 16;
-				int chunkj = j * 16;
-				pieceList.add(new DebugCityManager.Piece(templateManager, BLOCK, new BlockPos(pos.getX() + chunki, pos.getY() , pos.getZ() + chunkj), rotation));
-			}
-		}
+		int offset = 80;
 		
+		for (int i = 0; i < 176; i+=4) {
+			for (int j = 0; j < 176; j+=4) {
+				int x = i - offset + pos.getX();
+				int z = j - offset + pos.getZ();
+				if(map[i][j]) pieceList.add(new DebugCityManager.Piece(templateManager, BLOCK, new BlockPos(x, pos.getY() , z), rotation));
+
+			}
+		}		
 	}
 
 	//quick fix. need to put this somewhere else
@@ -66,7 +68,7 @@ public class DebugCityManager extends AbstractCityManager{
 		public Piece(TemplateManager templateManagerIn, ResourceLocation resourceLocationIn, BlockPos pos, Rotation rotationIn) {
 			super(PPStructures.CITY_PIECE, 0);
 			this.resourceLocation = resourceLocationIn;
-			BlockPos blockpos = new BlockPos(0,1,0);//UndergroundVillagePieces.OFFSET.get(resourceLocation);
+			BlockPos blockpos = new BlockPos(0,-1,0);//UndergroundVillagePieces.OFFSET.get(resourceLocation);
 			this.templatePosition = pos.offset(blockpos.getX(), blockpos.getY(), blockpos.getZ());
 			this.rotation = rotationIn;
 			this.setupPiece(templateManagerIn);

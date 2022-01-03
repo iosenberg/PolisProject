@@ -3,9 +3,9 @@ package com.iosenberg.polisproject.init;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.iosenberg.polisproject.PolisProject;
-import com.iosenberg.polisproject.structure.CityStructure;
 import com.iosenberg.polisproject.structure.RoadJunctionStructure;
 import com.iosenberg.polisproject.structure.RoadJunctionStructurePiece;
+import com.iosenberg.polisproject.structure.city.CityStructure;
 import com.iosenberg.polisproject.structure.city.DebugCityManager;
 
 import net.minecraft.util.ResourceLocation;

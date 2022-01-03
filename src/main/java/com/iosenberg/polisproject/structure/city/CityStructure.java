@@ -1,4 +1,4 @@
-package com.iosenberg.polisproject.structure;
+package com.iosenberg.polisproject.structure.city;
 
 import java.awt.Point;
 import java.util.LinkedList;
@@ -8,10 +8,7 @@ import org.apache.logging.log4j.Level;
 
 import com.google.common.collect.ImmutableMap;
 import com.iosenberg.polisproject.PolisProject;
-import com.iosenberg.polisproject.structure.city.AbstractCityManager;
 import com.iosenberg.polisproject.structure.city.AbstractCityManager.Piece;
-import com.iosenberg.polisproject.structure.city.DebugCityManager;
-import com.iosenberg.polisproject.structure.city.FordFulkerson;
 import com.mojang.serialization.Codec;
 
 import net.minecraft.util.Rotation;
@@ -51,7 +48,8 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 	
 	@Override
 	public GenerationStage.Decoration step() {
-		return GenerationStage.Decoration.TOP_LAYER_MODIFICATION;
+		// TODO Revisit after adding structures
+		return GenerationStage.Decoration.RAW_GENERATION;
 	}
 	
 	//Need to rewrite
@@ -97,41 +95,10 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 		boolean[][] smallcityMap = new boolean[44][44];
 		boolean[][] marked = new boolean[44][44];
 
-		LinkedList<Point> queue = new LinkedList<Point>();
+		LinkedList<Point> queue = new LinkedList<Point>();		
 		
-//		boolean notdone = true;
-//		int counter = 1;
-//		while(notdone) {
-//			int min = 22-counter;
-//			int max = 21+counter;
-//			for(int i = 0; i < counter; i++) {
-//				if(Math.abs(pointArray[min][i].x - height) < 5 && pointArray[min][i].y == biomeModeIndex) {
-//					queue.add(new Point(min,i));
-//					marked[min][i] = true;
-//					notdone = false;
-//				}
-//				if(Math.abs(pointArray[i][max].x - height) < 5 && pointArray[i][max].y == biomeModeIndex) {
-//					queue.add(new Point(i, max));
-//					marked[i][max] = true;
-//					notdone = false;
-//				}
-//				if(Math.abs(pointArray[max][max-i].x - height) < 5 && pointArray[max][max-i].y == biomeModeIndex) {
-//					queue.add(new Point(max,max-i));
-//					marked[max][max-i] = true;
-//					notdone = false;
-//				}
-//				if(Math.abs(pointArray[max-i][min].x - height) < 5 && pointArray[max-i][min].y == biomeModeIndex) {
-//					queue.add(new Point(max-i, min));
-//					marked[max-i][min] = true;
-//					notdone = false;
-//				}
-//			}
-//			counter++;
-//		}
-		
-		
-		
-		for(int i = 0; i < 44; i++) {
+		//Step 1: Add bad 
+		for(int i = 0; i < 43; i++) {
 			queue.add(new Point(0,i));
 			marked[0][i] = true;
 			queue.add(new Point(i, 43));
@@ -146,23 +113,176 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 			Point p = queue.poll();
 			if(Math.abs(pointArray[p.x][p.y].x - height) > 4 || pointArray[p.x][p.y].y != biomeModeIndex) {
 				smallcityMap[p.x][p.y] = true;
-				if(p.x > 0) if(!marked[p.x-1][p.y]) {
+				if(p.x > 0 && !marked[p.x-1][p.y]) {
 					queue.add(new Point(p.x-1,p.y));
 					marked[p.x-1][p.y] = true; 
 				}
-				if(p.x < 43) if(!marked[p.x+1][p.y]) {
+				if(p.x < 43 && !marked[p.x+1][p.y]) {
 					queue.add(new Point(p.x+1,p.y));
 					marked[p.x+1][p.y] = true; 
 				}
-				if(p.y > 0) if(!marked[p.x][p.y-1]) {
+				if(p.y > 0 && !marked[p.x][p.y-1]) {
 					queue.add(new Point(p.x,p.y-1));
 					marked[p.x][p.y-1] = true; 
 				}
-				if(p.y < 43) if(!marked[p.x][p.y+1]) {
+				if(p.y < 43 && !marked[p.x][p.y+1]) {
 					queue.add(new Point(p.x,p.y+1));
 					marked[p.x][p.y+1] = true; 
 				}
 			}
+		}
+		
+		System.out.println("Step 1:");
+		for(int i = 0; i < 44; i++) {
+			for(int j = 0; j < 44; j++) {
+				System.out.print(smallcityMap[i][j] ? 1 : 0);
+			}
+			System.out.println();
+		}
+		
+//		marked = new boolean[44][44];
+		
+		//Step 2: Remove shlongs p one
+		for (int i = 0; i < 44; i++ ) {
+			for (int j = 0; j < 44; j++) {
+				queue.add(new Point(i,j));
+//				if(!smallcityMap[i][j]) {
+//					if(i == 0) 
+//						smallcityMap[i][j] = true;
+//					else if (i == 43)
+//						smallcityMap[i][j] = true;
+//					else if (smallcityMap[i-1][j] && smallcityMap[i+1][j])
+//						smallcityMap[i][j] = true;
+//					if(j == 0)
+//						smallcityMap[i][j] = true;
+//					else if (j == 43)
+//						smallcityMap[i][j] = true;
+//					else if (smallcityMap[i][j-1] && smallcityMap[i][j+1])
+//						smallcityMap[i][j] = true;
+//					if(smallcityMap[i][j]) {
+//						if(i > 0) if(!smallcityMap[i-1][j]) 
+//							queue.add(new Point(i-1,j));
+//						if(i < 43) if(!smallcityMap[i+1][j]) 
+//							queue.add(new Point(i+1,j));
+//						if(j > 0) if(!smallcityMap[i][j-1]) 
+//							queue.add(new Point(i,j-1));
+//						if(j < 43) if(!smallcityMap[i][j+1])
+//							queue.add(new Point(i,j+1));
+//					}
+//				}
+			}
+		}
+		
+		while(!queue.isEmpty()) {
+			Point p = queue.poll();
+			int i = p.x; //i'm lazy, lol
+			int j = p.y;
+			if(!smallcityMap[i][j]) {
+				boolean liedgent = i != 0;
+				boolean hiedgent = i != 43;
+				boolean ljedgent = j != 0;
+				boolean hjedgent = j != 43;
+				
+				//Checks each opposite pair of cells around it
+				if((liedgent && hiedgent) && (smallcityMap[i-1][j] && smallcityMap[i+1][j]))
+					smallcityMap[i][j] = true;
+				if((ljedgent && hjedgent) && (smallcityMap[i][j-1] && smallcityMap[i][j+1]))
+					smallcityMap[i][j] = true;
+				if(liedgent && hiedgent && ljedgent && hjedgent) {
+						if (smallcityMap[i+1][j+1] && smallcityMap[i-1][j-1])
+							smallcityMap[i][j] = true;
+						if (smallcityMap[i-1][j+1] && smallcityMap[i+1][j-1])
+							smallcityMap[i][j] = true;
+				}
+				
+				//If value has changed, enqueue live neighbors
+				if(smallcityMap[i][j]) {
+					if(i > 0) if(!smallcityMap[i-1][j]) 
+						queue.add(new Point(i-1,j));
+					if(i < 43) if(!smallcityMap[i+1][j]) 
+						queue.add(new Point(i+1,j));
+					if(j > 0) if(!smallcityMap[i][j-1]) 
+						queue.add(new Point(i,j-1));
+					if(j < 43) if(!smallcityMap[i][j+1])
+						queue.add(new Point(i,j+1));
+				}
+			}
+		}
+		
+		System.out.println("Step 2:");
+		for(int i = 0; i < 44; i++) {
+			for(int j = 0; j < 44; j++) {
+				System.out.print(smallcityMap[i][j] ? 1 : 0);
+			}
+			System.out.println();
+		}
+		
+		byte[][] islandMap = new byte[44][44];
+		LinkedList<Integer> islandSizeList = new LinkedList<Integer>();
+		byte islandCounter = 1;
+		marked = new boolean[44][44];
+		
+		for(int i = 0; i < 44; i++) {
+			for(int j = 0; j < 44; j++) {
+				if(islandMap[i][j] == 0 && !smallcityMap[i][j]) {
+					queue.add(new Point(i,j));
+					int size = 0;
+					while(!queue.isEmpty()) {
+						Point p = queue.poll();
+						islandMap[p.x][p.y] = islandCounter;
+						if(p.x != 0 && !marked[p.x-1][p.y] && !smallcityMap[p.x-1][p.y]) {
+							queue.add(new Point(p.x-1,p.y)); 
+							marked[p.x-1][p.y] = true; 
+						}
+						if(p.x != 43 && !marked[p.x+1][p.y] && !smallcityMap[p.x+1][p.y]) {
+							queue.add(new Point(p.x+1,p.y));
+							marked[p.x+1][p.y] = true; 
+						}
+						if(p.y != 0 && !marked[p.x][p.y-1] && !smallcityMap[p.x][p.y-1]) {
+							queue.add(new Point(p.x,p.y-1));
+							marked[p.x][p.y-1] = true;
+						}
+						if(p.y != 43 && !marked[p.x][p.y+1] && !smallcityMap[p.x][p.y+1]) {
+							queue.add(new Point(p.x,p.y+1));
+							marked[p.x][p.y+1] = true;
+						}
+						size++;
+					}
+					islandSizeList.add(size);
+					islandCounter++;
+					
+					System.out.println(islandCounter-1);
+					for(int k = 0; k < 44; k++) {
+						for(int l = 0; l < 44; l++) {
+							System.out.print(islandMap[k][l]);
+						}
+						System.out.println();
+					}
+				}
+			}
+		}
+		
+		//Finds largest island
+		int maxSizeIndex = 0;
+		for(int i = 1; i < islandSizeList.size(); i++)
+				if(islandSizeList.get(i) > islandSizeList.get(maxSizeIndex))
+						maxSizeIndex = i;
+		
+		//If island is not large enough, returns false: no city
+		if(islandSizeList.get(maxSizeIndex) < 5) return false;
+		
+		//Sets all cells not in the island to true;
+		for(int i = 0; i < 44; i++)
+			for(int j = 0; j < 44; j++)
+				if(!smallcityMap[i][j] && islandMap[i][j] != maxSizeIndex)
+					smallcityMap[i][j] = true;
+		
+		System.out.println("Step 3:");
+		for(int i = 0; i < 44; i++) {
+			for(int j = 0; j < 44; j++) {
+				System.out.print(smallcityMap[i][j] ? 1 : 0);
+			}
+			System.out.println();
 		}
 		
 		cityMap = new boolean[176][176];
@@ -246,6 +366,7 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 			z += 87;
 			BlockPos blockpos = new BlockPos(x, generator.getFirstFreeHeight(x, z, Heightmap.Type.WORLD_SURFACE), z);
 			DebugCityManager.height(heightModeIndex);
+			DebugCityManager.map(cityMap);
 			
 //			int x = chunkX << 4;
 //			int z = chunkZ << 4;
