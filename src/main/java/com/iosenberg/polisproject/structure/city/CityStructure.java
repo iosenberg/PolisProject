@@ -52,7 +52,7 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 		return GenerationStage.Decoration.RAW_GENERATION;
 	}
 	
-	//Need to rewrite
+	//During this function, I generate the map of the terrain which is passed into the StructurePieces class.
 	@Override
 	protected boolean isFeatureChunk(ChunkGenerator generator, BiomeProvider biomeProviderIn, long seed,
 			SharedSeedRandom seedRand, int chunkX, int chunkZ, Biome biomeIn, ChunkPos chunkPos,
@@ -62,14 +62,17 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 		ChunkPos villageChunk = Structure.VILLAGE.getPotentialFeatureChunk(generator.getSettings().getConfig(Structure.VILLAGE), seed, seedRand, chunkX, chunkZ);
 		if(Math.sqrt((villageChunk.x - chunkX)^2 + (villageChunk.z - chunkZ)^2) < 19) return false; //19 is the number required for the radius to contain all of the city's borders
 		
-		//maybe check standard deviation of the height of blocks????
-		//Also make sure it doesn't spawn too close to a village, or anything else that might cause a big overlap
 		int x = chunkX << 4;
 		int z = chunkZ << 4;
 		
+		//44 is hardcoded into everything, but if that becomes a hassle, I'll make a constant
 		//int size = 44;
 		
-		Point[][] pointArray = new Point[44][44];
+		
+		//Get height and biome of each cell, write it into heightArray and biomeArray
+		//Also get the mode height and biome for later use
+		int[][] heightArray = new int[44][44];
+		int[][] biomeArray = new int[44][44];
 		
 		int[] modeHeightArray = new int[130];
 		int[] modeBiomeArray = new int[17];
@@ -77,27 +80,37 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 			for(int j = 0; j < 44; j++) {
 				int tempx = x + i*4 - 80; //-80 to offset the center of the structure
 				int tempz = z + j*4 - 80;
+				
 				int thisHeight = generator.getBaseHeight(tempx, tempz, Heightmap.Type.WORLD_SURFACE);
 				int thisBiome = biomeMap.get(biomeProviderIn.getNoiseBiome(tempx/4, thisHeight, tempz/4).getBiomeCategory().toString());
-				pointArray[i][j] = new Point(thisHeight, thisBiome);
-				if(thisHeight < 130) modeHeightArray[thisHeight] ++;
+
+				heightArray[i][j] = thisHeight;
+				biomeArray[i][j] = thisBiome;
+				
+				if(thisHeight < 130) modeHeightArray[thisHeight] ++; //prevents out of bounds
 				modeBiomeArray[thisBiome]++;
 			}
 		}
 		
+		//Calculate mode height
 		int heightModeIndex = 0;
 		for(int i=0;i<modeHeightArray.length;i++) if (modeHeightArray[i] > modeHeightArray[heightModeIndex]) heightModeIndex = i;
 		height = heightModeIndex;
 		
+		//Calculate mode biome
 		int biomeModeIndex = 0;
 		for(int i=0;i<modeBiomeArray.length;i++) if (modeBiomeArray[i] > modeBiomeArray[biomeModeIndex]) biomeModeIndex = i;
 		
-		boolean[][] smallcityMap = new boolean[44][44];
+		
+		//Start of city placement algorithm.
+		
+		//Holds the map of cells. true = this cell will not be in the city. false = this cell will be in the city
+		boolean[][] smallCityMap = new boolean[44][44];
 		boolean[][] marked = new boolean[44][44];
 
 		LinkedList<Point> queue = new LinkedList<Point>();		
 		
-		//Step 1: Add bad 
+		//Step 1: Starting from the outside, mark true every invalid cell
 		for(int i = 0; i < 43; i++) {
 			queue.add(new Point(0,i));
 			marked[0][i] = true;
@@ -111,8 +124,8 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 		
 		while(!queue.isEmpty()) {
 			Point p = queue.poll();
-			if(Math.abs(pointArray[p.x][p.y].x - height) > 4 || pointArray[p.x][p.y].y != biomeModeIndex) {
-				smallcityMap[p.x][p.y] = true;
+			if(Math.abs(heightArray[p.x][p.y] - height) > 4 || biomeArray[p.x][p.y] != biomeModeIndex) {
+				smallCityMap[p.x][p.y] = true;
 				if(p.x > 0 && !marked[p.x-1][p.y]) {
 					queue.add(new Point(p.x-1,p.y));
 					marked[p.x-1][p.y] = true; 
@@ -132,44 +145,10 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 			}
 		}
 		
-		System.out.println("Step 1:");
-		for(int i = 0; i < 44; i++) {
-			for(int j = 0; j < 44; j++) {
-				System.out.print(smallcityMap[i][j] ? 1 : 0);
-			}
-			System.out.println();
-		}
-		
-//		marked = new boolean[44][44];
-		
-		//Step 2: Remove shlongs p one
+		//Step 2: Smooth edges, valid cells with three invalid neighbors
 		for (int i = 0; i < 44; i++ ) {
 			for (int j = 0; j < 44; j++) {
 				queue.add(new Point(i,j));
-//				if(!smallcityMap[i][j]) {
-//					if(i == 0) 
-//						smallcityMap[i][j] = true;
-//					else if (i == 43)
-//						smallcityMap[i][j] = true;
-//					else if (smallcityMap[i-1][j] && smallcityMap[i+1][j])
-//						smallcityMap[i][j] = true;
-//					if(j == 0)
-//						smallcityMap[i][j] = true;
-//					else if (j == 43)
-//						smallcityMap[i][j] = true;
-//					else if (smallcityMap[i][j-1] && smallcityMap[i][j+1])
-//						smallcityMap[i][j] = true;
-//					if(smallcityMap[i][j]) {
-//						if(i > 0) if(!smallcityMap[i-1][j]) 
-//							queue.add(new Point(i-1,j));
-//						if(i < 43) if(!smallcityMap[i+1][j]) 
-//							queue.add(new Point(i+1,j));
-//						if(j > 0) if(!smallcityMap[i][j-1]) 
-//							queue.add(new Point(i,j-1));
-//						if(j < 43) if(!smallcityMap[i][j+1])
-//							queue.add(new Point(i,j+1));
-//					}
-//				}
 			}
 		}
 		
@@ -177,46 +156,41 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 			Point p = queue.poll();
 			int i = p.x; //i'm lazy, lol
 			int j = p.y;
-			if(!smallcityMap[i][j]) {
-				boolean liedgent = i != 0;
-				boolean hiedgent = i != 43;
-				boolean ljedgent = j != 0;
-				boolean hjedgent = j != 43;
+			if(!smallCityMap[i][j]) {
+				boolean notLowesti = i != 0;
+				boolean notHighesti = i != 43;
+				boolean notLowestj = j != 0;
+				boolean notHighestj = j != 43;
+				//TODO ^Consider removing if any of these are false
 				
 				//Checks each opposite pair of cells around it
-				if((liedgent && hiedgent) && (smallcityMap[i-1][j] && smallcityMap[i+1][j]))
-					smallcityMap[i][j] = true;
-				if((ljedgent && hjedgent) && (smallcityMap[i][j-1] && smallcityMap[i][j+1]))
-					smallcityMap[i][j] = true;
-				if(liedgent && hiedgent && ljedgent && hjedgent) {
-						if (smallcityMap[i+1][j+1] && smallcityMap[i-1][j-1])
-							smallcityMap[i][j] = true;
-						if (smallcityMap[i-1][j+1] && smallcityMap[i+1][j-1])
-							smallcityMap[i][j] = true;
+				if((notLowesti && notHighesti) && (smallCityMap[i-1][j] && smallCityMap[i+1][j]))
+					smallCityMap[i][j] = true;
+				if((notLowestj && notHighestj) && (smallCityMap[i][j-1] && smallCityMap[i][j+1]))
+					smallCityMap[i][j] = true;
+				//Checks diagonals
+				if(notLowesti && notHighesti && notLowestj && notHighestj) {
+						if (smallCityMap[i+1][j+1] && smallCityMap[i-1][j-1])
+							smallCityMap[i][j] = true;
+						if (smallCityMap[i-1][j+1] && smallCityMap[i+1][j-1])
+							smallCityMap[i][j] = true;
 				}
 				
-				//If value has changed, enqueue live neighbors
-				if(smallcityMap[i][j]) {
-					if(i > 0) if(!smallcityMap[i-1][j]) 
+				//If value has changed, enqueue valid neighbors
+				if(smallCityMap[i][j]) {
+					if(i > 0) if(!smallCityMap[i-1][j]) 
 						queue.add(new Point(i-1,j));
-					if(i < 43) if(!smallcityMap[i+1][j]) 
+					if(i < 43) if(!smallCityMap[i+1][j]) 
 						queue.add(new Point(i+1,j));
-					if(j > 0) if(!smallcityMap[i][j-1]) 
+					if(j > 0) if(!smallCityMap[i][j-1]) 
 						queue.add(new Point(i,j-1));
-					if(j < 43) if(!smallcityMap[i][j+1])
+					if(j < 43) if(!smallCityMap[i][j+1])
 						queue.add(new Point(i,j+1));
 				}
 			}
 		}
-		
-		System.out.println("Step 2:");
-		for(int i = 0; i < 44; i++) {
-			for(int j = 0; j < 44; j++) {
-				System.out.print(smallcityMap[i][j] ? 1 : 0);
-			}
-			System.out.println();
-		}
-		
+
+		//Step three: Calculate size of biggest "island." Remove all smaller islands
 		byte[][] islandMap = new byte[44][44];
 		LinkedList<Integer> islandSizeList = new LinkedList<Integer>();
 		islandSizeList.add(0); //since the first island is labeled 1
@@ -225,40 +199,32 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 		
 		for(int i = 0; i < 44; i++) {
 			for(int j = 0; j < 44; j++) {
-				if(islandMap[i][j] == 0 && !smallcityMap[i][j]) {
+				if(islandMap[i][j] == 0 && !smallCityMap[i][j]) {
 					queue.add(new Point(i,j));
 					int size = 0;
 					while(!queue.isEmpty()) {
 						Point p = queue.poll();
 						islandMap[p.x][p.y] = islandCounter;
 						size++;
-						if(p.x != 0 && !marked[p.x-1][p.y] && !smallcityMap[p.x-1][p.y]) {
+						if(p.x != 0 && !marked[p.x-1][p.y] && !smallCityMap[p.x-1][p.y]) {
 							queue.add(new Point(p.x-1,p.y)); 
 							marked[p.x-1][p.y] = true; 
 						}
-						if(p.x != 43 && !marked[p.x+1][p.y] && !smallcityMap[p.x+1][p.y]) {
+						if(p.x != 43 && !marked[p.x+1][p.y] && !smallCityMap[p.x+1][p.y]) {
 							queue.add(new Point(p.x+1,p.y));
 							marked[p.x+1][p.y] = true; 
 						}
-						if(p.y != 0 && !marked[p.x][p.y-1] && !smallcityMap[p.x][p.y-1]) {
+						if(p.y != 0 && !marked[p.x][p.y-1] && !smallCityMap[p.x][p.y-1]) {
 							queue.add(new Point(p.x,p.y-1));
 							marked[p.x][p.y-1] = true;
 						}
-						if(p.y != 43 && !marked[p.x][p.y+1] && !smallcityMap[p.x][p.y+1]) {
+						if(p.y != 43 && !marked[p.x][p.y+1] && !smallCityMap[p.x][p.y+1]) {
 							queue.add(new Point(p.x,p.y+1));
 							marked[p.x][p.y+1] = true;
 						}
 					}
 					islandSizeList.add(size);
 					islandCounter++;
-					
-					System.out.println(islandCounter-1);
-					for(int k = 0; k < 44; k++) {
-						for(int l = 0; l < 44; l++) {
-							System.out.print(islandMap[k][l]);
-						}
-						System.out.println();
-					}
 				}
 			}
 		}
@@ -275,26 +241,21 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 		//Sets all cells not in the island to true;
 		for(int i = 0; i < 44; i++)
 			for(int j = 0; j < 44; j++)
-				if(!smallcityMap[i][j] && islandMap[i][j] != maxSizeIndex)
-					smallcityMap[i][j] = true;
-		
-		System.out.println("Choosing island " + maxSizeIndex + " which has size " + islandSizeList.get(maxSizeIndex));
-		
-		System.out.println("Step 3:");
-		for(int i = 0; i < 44; i++) {
-			for(int j = 0; j < 44; j++) {
-				System.out.print(smallcityMap[i][j] ? 1 : 0);
-			}
-			System.out.println();
-		}
-		
+				if(!smallCityMap[i][j] && islandMap[i][j] != maxSizeIndex)
+					smallCityMap[i][j] = true;
+
+		//Rewrites the smaller map into a map of appropriate size
 		cityMap = new boolean[176][176];
 		
 		for(int i = 0; i < 176; i++) 
 			for(int j = 0; j < 176; j++) 
-				cityMap[i][j] = !smallcityMap[i/4][j/4]; //I'll think of a more efficient way to handle the boolean map later
+				cityMap[i][j] = !smallCityMap[i/4][j/4]; //I'll think of a more efficient way to handle the boolean map later
 		
-		if (biomeModeIndex == 12 /* desert */) return true;
+		//TODO: Later, these will be written into WorldSaveData
+		DebugCityManager.height(heightModeIndex);
+		DebugCityManager.map(cityMap);
+		
+		if (biomeModeIndex == 12 /* desert */) return true; //Just to make sure. This won't be needed once there are more biome cities
 		return false;
 	}
 	
@@ -305,83 +266,17 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 			this.boundingBox = mutableBoundingBox;
 		}
 		
-		//Need to rewrite
 		@Override
 		public void generatePieces(DynamicRegistries dynamicRegistryManager, ChunkGenerator generator,
 				TemplateManager templateManagerIn, int chunkX, int chunkZ, Biome biomeIn, NoFeatureConfig config) {
 			
-			this.getBoundingBox();
-			
 			//Rotation rotation = Rotation.NONE;
-			
-			int x = (chunkX << 4) - 80; //+ 7;
-			int z = (chunkZ << 4) - 80; //+ 7;
-			BiomeProvider biomesource = generator.getBiomeSource();
-//			int y = generator.getBaseHeight(x, z, Heightmap.Type.WORLD_SURFACE);
-			
-			//Generate map. 176
-//			Point[][] cityMap = new Point[176][176];
-//			
-//			//iterates by blocks of 4, fills in each point in cityMap with x = height, y = biome?
-//			for (int i = 0; i < 88; i++) {
-//				for (int j = 0; j < 88; j++) {
-//					int xi = x+i*2;
-//					int zj = z+j*2;
-//					int height = generator.getFirstFreeHeight(xi, zj, Heightmap.Type.WORLD_SURFACE);
-//					int biome = biomeMap.get(generator.getBiomeSource().getNoiseBiome(x/4+i/2, height, z/4+j/2).getBiomeCategory().toString());
-//					cityMap[i*2][j*2] = new Point(height, biome);
-//					cityMap[i*2+1][j*2] = new Point(height, biome);
-//					cityMap[i*2][j*2+1] = new Point(height, biome);
-//					cityMap[i*2+1][j*2+1] = new Point(height, biome);
-//				}
-//			}
-			
-			
-		//Generate map. 88
-			Point[][] shityMap = new Point[44][44];
-			int[] heightModeList = new int[120];
-			int[] biomeModeList = new int[17];
-			for (int i = 0; i < 44; i++) {
-				for (int j = 0; j < 44; j++) {
-					int height = generator.getFirstFreeHeight(x+i*4, z+j*4, Heightmap.Type.WORLD_SURFACE);
-					int biome = biomeMap.get(biomesource.getNoiseBiome(x/4+i, height, z/4+j).getBiomeCategory().toString());
-					shityMap[i][j] = new Point(height, biome);
-					biomeModeList[biome]++;
-					if(height < 121) heightModeList[height]++;
-				}
-			}
-			
-			int heightModeIndex = 0;
-			for(int i=0;i<heightModeList.length;i++) if (heightModeList[i] > heightModeList[heightModeIndex]) heightModeIndex = i;
-			
-			int biomeModeIndex = 0;
-			for(int i=0;i<biomeModeList.length;i++) if (biomeModeList[i] > biomeModeList[biomeModeIndex]) biomeModeIndex = i;
-			
-//			byte[][] cityMap = FordFulkerson.placeCity(shityMap, 0);
-			
-			//Add pieces function???? Figure this out later
-//			PolisProject.LOGGER.log(Level.DEBUG, "Biome is " + biomeIn.getBiomeCategory().toString() + ", " + generator.getBiomeSource().getNoiseBiome(x >> 2, y, z >> 2).getBiomeCategory().toString());
-//			PolisProject.LOGGER.log(Level.DEBUG, "So the number I'm passing in is " + biomeMap.get(biomeIn.getBiomeCategory().toString()));
-//			this.pieces.add(new AbstractCityManager.Piece(templateManagerIn, x, y, z, biomeMap.get(biomeIn.getBiomeCategory().toString())));
-//			this.pieces.add(new AbstractCityManager.Piece(new BlockPos(x,y,z), chunkX, chunkZ, map));//CityHashMap.get(chunkX, chunkZ)));
-
-			x += 87;
-			z += 87;
-			BlockPos blockpos = new BlockPos(x, generator.getFirstFreeHeight(x, z, Heightmap.Type.WORLD_SURFACE), z);
-			DebugCityManager.height(heightModeIndex);
-			DebugCityManager.map(cityMap);
-			
-//			int x = chunkX << 4;
-//			int z = chunkZ << 4;
+			int x = chunkX << 4;
+			int z = chunkZ << 4;
 			int y = generator.getBaseHeight(x, z, Heightmap.Type.WORLD_SURFACE);
 			DebugCityManager.generatePieces(templateManagerIn, new BlockPos(x, y, z), Rotation.NONE, this.pieces, random);
-//			this.pieces.add(new AbstractCityManager.Piece(blockpos, chunkX, chunkZ, cityMap, height));
 			
 			this.calculateBoundingBox();
-			
-			System.out.println("Bounding box of first piece: ");
-			System.out.println(this.pieces.get(0).getBoundingBox().toString());
-			
 		}
 	}
 }

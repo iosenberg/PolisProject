@@ -1,5 +1,6 @@
 package com.iosenberg.polisproject.structure;
 
+import com.iosenberg.polisproject.init.PPStructures;
 import com.mojang.serialization.Codec;
 
 import net.minecraft.util.Rotation;
@@ -33,16 +34,15 @@ public class RoadJunctionStructure extends Structure<NoFeatureConfig>{
 		return GenerationStage.Decoration.UNDERGROUND_STRUCTURES;//don't remember why this one. Need to read up again on what happens where
 	}
 	
+	//Does not spawn if the chunk is too close to a city or is in an "illegal" biome (for now, that's ocean or mountain)
 	@Override
 	protected boolean isFeatureChunk(ChunkGenerator generator, BiomeProvider biomeProviderIn, long seed,
 			SharedSeedRandom seedRand, int chunkX, int chunkZ, Biome biomeIn, ChunkPos chunkPos,
 			NoFeatureConfig config) {
-		ChunkPos cityChunk = Structure.VILLAGE.getPotentialFeatureChunk(generator.getSettings().getConfig(Structure.VILLAGE), seed, seedRand, chunkX, chunkZ);
+		ChunkPos cityChunk = PPStructures.CITY.getPotentialFeatureChunk(generator.getSettings().getConfig(PPStructures.CITY), seed, seedRand, chunkX, chunkZ);
 		if(Math.sqrt((cityChunk.x - chunkX)^2 + (cityChunk.z - chunkZ)^2) < 40) return false;
 		String biome = biomeIn.getBiomeCategory().toString();
 		if(biome.equals("OCEAN") || biome.equals("EXTREME_HILLS")) return false;
-		//check to make sure not too close to city or village
-		//check to make sure not in illegal biome, like ocean or river (or mountain?)
 		return true;
 	}
 	

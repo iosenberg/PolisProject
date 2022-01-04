@@ -27,7 +27,6 @@ import net.minecraft.world.gen.feature.template.TemplateManager;
 
 public class DebugCityManager extends AbstractCityManager{
 	private static final ResourceLocation BLOCK = new ResourceLocation(PolisProject.MODID, "block");
-	private static final ResourceLocation ROADJUNCTION = new ResourceLocation(PolisProject.MODID, "road_junction");
 	private static boolean[][] map;
 	private static int height;
 
@@ -47,14 +46,14 @@ public class DebugCityManager extends AbstractCityManager{
 	public static void generatePieces(TemplateManager templateManager, BlockPos pos, Rotation rotation,
 			List<StructurePiece> pieceList, Random random) {
 
-		int size = 5;
+		//int size = 5;
 		int offset = 80;
 		
 		for (int i = 0; i < 176; i+=4) {
 			for (int j = 0; j < 176; j+=4) {
 				int x = i - offset + pos.getX();
 				int z = j - offset + pos.getZ();
-				if(map[i][j]) pieceList.add(new DebugCityManager.Piece(templateManager, BLOCK, new BlockPos(x, pos.getY() , z), rotation));
+				if(map[i][j]) pieceList.add(new DebugCityManager.Piece(templateManager, BLOCK, new BlockPos(x, height, z), rotation));
 
 			}
 		}		
