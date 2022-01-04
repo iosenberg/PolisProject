@@ -26,6 +26,7 @@ import net.minecraft.world.gen.feature.NoFeatureConfig;
 import net.minecraft.world.gen.feature.structure.Structure;
 import net.minecraft.world.gen.feature.structure.StructureStart;
 import net.minecraft.world.gen.feature.template.TemplateManager;
+import net.minecraft.world.storage.WorldSavedData;
 
 public class CityStructure extends Structure<NoFeatureConfig>{
 	
@@ -291,68 +292,129 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 		
 		
 		Point centroid = new Point((highesti + lowesti)/2,(highestj + lowestj)/2);
-		int[][] centroidMap = new int[4][4]; //[LILJ,LIHJ,HILJ,HIHJ][Li,Hi,Lj,Hj]
-		//Ugh i know it's messy
-		centroidMap[0][0] = Integer.MAX_VALUE;
-		centroidMap[0][2] = Integer.MAX_VALUE;
-		centroidMap[1][0] = Integer.MAX_VALUE;
-		centroidMap[1][2] = Integer.MAX_VALUE;
-		centroidMap[2][0] = Integer.MAX_VALUE;
-		centroidMap[2][2] = Integer.MAX_VALUE;
-		centroidMap[3][0] = Integer.MAX_VALUE;
-		centroidMap[3][2] = Integer.MAX_VALUE;
+		
+		//Gonna try point of inaccessibility instead of centroid
+		
+		LinkedList[] districtList = {
+				new LinkedList<Point>(), //LILJ
+				new LinkedList<Point>(), //LIHJ
+				new LinkedList<Point>(), //HILJ
+				new LinkedList<Point>()  //HIHJ
+		};
+		
 		for(int i=0;i<44;i++) {
 			for(int j=0;j<44;j++) {
 				if(!smallCityMap[i][j]) {
-					if(i<centroid.x) {
-						if(j<centroid.y) {
-							if(i < centroidMap[0][0]) centroidMap[0][0] = i;
-							if(i > centroidMap[0][1]) centroidMap[0][1] = i;
-							if(j < centroidMap[0][2]) centroidMap[0][2] = j;
-							if(j > centroidMap[0][3]) centroidMap[0][3] = j;
-						}
-						else {
-							if(i < centroidMap[1][0]) centroidMap[1][0] = i;
-							if(i > centroidMap[1][1]) centroidMap[1][1] = i;
-							if(j < centroidMap[1][2]) centroidMap[1][2] = j;
-							if(j > centroidMap[1][3]) centroidMap[1][3] = j;
+					if(i<centroid.x) { //LI
+						if(j<centroid.y) { //LILJ
+							districtList[0].add(new Point(i,j));
+						}	
+						else { //LIHJ
+							districtList[1].add(new Point(i,j));
 						}
 					}
-					else {
-						if(j<centroid.y) {
-							if(i < centroidMap[2][0]) centroidMap[2][0] = i;
-							if(i > centroidMap[2][1]) centroidMap[2][1] = i;
-							if(j < centroidMap[2][2]) centroidMap[2][2] = j;
-							if(j > centroidMap[2][3]) centroidMap[2][3] = j;
+					else { //HI
+						if(j<centroid.y) { //HILJ
+							districtList[2].add(new Point(i,j));
 						}
-						else {
-							if(i < centroidMap[3][0]) centroidMap[3][0] = i;
-							if(i > centroidMap[3][1]) centroidMap[3][1] = i;
-							if(j < centroidMap[3][2]) centroidMap[3][2] = j;
-							if(j > centroidMap[3][3]) centroidMap[3][3] = j;
+						else { //HIHJ
+							districtList[3].add(new Point(i,j));
 						}
 					}
 				}
 			}
 		}
 		
-		Point[] centroids = new Point[4];
-		for(int i = 0; i < 4; i++) {
-			centroids[i] = new Point((centroidMap[i][0] + centroidMap[i][1])/2,(centroidMap[i][2] + centroidMap[i][3])/2);
+		int[] minDists = {Integer.MAX_VALUE,Integer.MAX_VALUE,Integer.MAX_VALUE,Integer.MAX_VALUE};
+		Point[] PoI = new Point[4]; //Points of Inaccessibility / Places of Interest
+		for(int i=0; i < 4; i++) {
+			int maxDistIndex = 0;
+			LinkedList<Point> list = districtList[i];
+			for(int j = 0; j < list.size(); j++) {
+				int dist = 0;
+				for(int k = 0; k < districtList[i].size(); k++) {
+					//Add distance from j to k to dist
+					dist += Math.abs(list.get(j).x - list.get(k).x) + Math.abs(list.get(j).y - list.get(k).y);
+				}
+				System.out.println("Dist for " + list.get(j).x + "," + list.get(j).y + " = " + dist);
+				if(dist < minDists[i]) {
+					minDists[i] = dist;
+					PoI[i] = list.get(j);
+				}
+			}
+		}
+		
+		
+		
+//		int[][] centroidMap = new int[4][4]; //[LILJ,LIHJ,HILJ,HIHJ][Li,Hi,Lj,Hj]
+//		//Ugh i know it's messy
+//		centroidMap[0][0] = Integer.MAX_VALUE;
+//		centroidMap[0][2] = Integer.MAX_VALUE;
+//		centroidMap[1][0] = Integer.MAX_VALUE;
+//		centroidMap[1][2] = Integer.MAX_VALUE;
+//		centroidMap[2][0] = Integer.MAX_VALUE;
+//		centroidMap[2][2] = Integer.MAX_VALUE;
+//		centroidMap[3][0] = Integer.MAX_VALUE;
+//		centroidMap[3][2] = Integer.MAX_VALUE;
+//		for(int i=0;i<44;i++) {
+//			for(int j=0;j<44;j++) {
+//				if(!smallCityMap[i][j]) {
+//					if(i<centroid.x) {
+//						if(j<centroid.y) {
+//							if(i < centroidMap[0][0]) centroidMap[0][0] = i;
+//							if(i > centroidMap[0][1]) centroidMap[0][1] = i;
+//							if(j < centroidMap[0][2]) centroidMap[0][2] = j;
+//							if(j > centroidMap[0][3]) centroidMap[0][3] = j;
+//						}
+//						else {
+//							if(i < centroidMap[1][0]) centroidMap[1][0] = i;
+//							if(i > centroidMap[1][1]) centroidMap[1][1] = i;
+//							if(j < centroidMap[1][2]) centroidMap[1][2] = j;
+//							if(j > centroidMap[1][3]) centroidMap[1][3] = j;
+//						}
+//					}
+//					else {
+//						if(j<centroid.y) {
+//							if(i < centroidMap[2][0]) centroidMap[2][0] = i;
+//							if(i > centroidMap[2][1]) centroidMap[2][1] = i;
+//							if(j < centroidMap[2][2]) centroidMap[2][2] = j;
+//							if(j > centroidMap[2][3]) centroidMap[2][3] = j;
+//						}
+//						else {
+//							if(i < centroidMap[3][0]) centroidMap[3][0] = i;
+//							if(i > centroidMap[3][1]) centroidMap[3][1] = i;
+//							if(j < centroidMap[3][2]) centroidMap[3][2] = j;
+//							if(j > centroidMap[3][3]) centroidMap[3][3] = j;
+//						}
+//					}
+//				}
+//			}
+//		}
+//		
+//		Point[] centroids = new Point[4];
+//		for(int i = 0; i < 4; i++) {
+//			centroids[i] = new Point((centroidMap[i][0] + centroidMap[i][1])/2,(centroidMap[i][2] + centroidMap[i][3])/2);
+//		}
+//		
+		
+		//All this is just a complex print statment
+		byte[][] printmap = new byte[44][44];
+		for(int i = 0;i<44;i++) {
+			for(int j = 0;j<44;j++) {
+				printmap[i][j] = (byte) (smallCityMap[i][j] ? 0 : 1);
+			}
+		}
+		
+		for(int i = 0; i < 4;i++) {
+			for(int j = 0; j < districtList[i].size(); j++) {
+				printmap[((Point)districtList[i].get(j)).x][((Point)districtList[i].get(j)).y] = (byte)(i+1);
+			}
+			printmap[PoI[i].x][PoI[i].y] = 8; 
 		}
 		
 		for(int i = 0;i<44;i++) {
 			for(int j=0;j<44;j++) {
-				boolean centroiddd = true;
-				for(int k = 0; k < 4; k++) {
-					if(i == centroids[k].x && j == centroids[k].y) {
-						System.out.print(2);
-						centroiddd = false;
-					}
-				}
-				if(centroiddd) {
-					System.out.print(smallCityMap[i][j] ? 0 : 1);
-				}
+				System.out.print(printmap[i][j] == 0 ? "." : printmap[i][j]);
 			}
 			System.out.println();
 		}
@@ -368,6 +430,8 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 		//TODO: Later, these will be written into WorldSaveData
 		DebugCityManager.height(heightModeIndex);
 		DebugCityManager.map(cityMap);
+		
+		System.out.println(chunkPos.toString());
 		
 		if (biomeModeIndex == 12 /* desert */) return true; //Just to make sure. This won't be needed once there are more biome cities
 		return false;
@@ -385,6 +449,8 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 		@Override
 		public void generatePieces(DynamicRegistries dynamicRegistryManager, ChunkGenerator generator,
 				TemplateManager templateManagerIn, int chunkX, int chunkZ, Biome biomeIn, NoFeatureConfig config) {
+			
+			System.out.println("[" + chunkX + ", " + chunkZ + "]");
 			
 			//Rotation rotation = Rotation.NONE;
 			int x = chunkX << 4;

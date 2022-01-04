@@ -5,6 +5,7 @@ import java.awt.Point;
 import com.iosenberg.polisproject.PolisProject;
 
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraft.world.storage.DimensionSavedDataManager;
@@ -16,6 +17,7 @@ public class PPWorldSavedData extends WorldSavedData{
 	private static final String ROAD_DATA = PolisProject.MODID + "RoadMap";
 	private static final PPWorldSavedData CLIENT_DUMMY = new PPWorldSavedData();
 	private CompoundNBT roadMap = new CompoundNBT(); //A map of Roads. 
+	private CompoundNBT cityMap = new CompoundNBT(); //A map of cities.
 	//Road is an NBT with the key "x,y", and Boolean East (x+), West (x-), South (z+), North (z-)
 	
 	public PPWorldSavedData() {
@@ -40,6 +42,19 @@ public class PPWorldSavedData extends WorldSavedData{
 	public CompoundNBT save(CompoundNBT data) {
 		data.put("RoadMap", roadMap);
 		return data;
+	}
+	
+	public void putCity(int chunkX, int chunkZ, byte height, byte biome, boolean[][] map, long[] anchors) {
+		CompoundNBT newCity = new CompoundNBT();
+
+		newCity.putByte("height", height);
+		newCity.putByte("biome", biome);
+		
+		//need to figure out maps.....
+		
+		newCity.putLongArray("anchors", anchors); //stores blockpos of anchors
+		
+		cityMap.put(chunkX + "," + chunkZ, newCity);
 	}
 
 	//Puts a RoadNBT into roadMap. Key is "x,y" of the chunk, and it contains a boolean for each direction, whether it connects to a road
