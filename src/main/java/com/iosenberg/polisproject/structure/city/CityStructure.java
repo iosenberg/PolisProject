@@ -244,6 +244,120 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 				if(!smallCityMap[i][j] && islandMap[i][j] != maxSizeIndex)
 					smallCityMap[i][j] = true;
 
+		
+		//Generate places of interest? by splitting city into smaller polygons
+		//This is messy. Need to find a better way to calculate a centroid-esque location
+		//Find centroid:
+		int lowesti = -1;
+		int highesti = -1;
+		int lowestj = -1;
+		int highestj = -1;
+		for(int i=0;i<44;i++) {
+			for(int j=0;j<44;j++) {
+				if(!smallCityMap[i][j]) {
+					lowesti = i;
+					break;
+				}
+			}
+			if(lowesti != -1) break;
+		}
+		for(int i=43;i>=0;i--) {
+			for(int j=0;j<44;j++) {
+				if(!smallCityMap[i][j]) {
+					highesti = i;
+					break;
+				}
+			}
+			if(highesti != -1) break;
+		}
+		for(int j=0;j<44;j++) {
+			for(int i=0;i<44;i++) {
+				if(!smallCityMap[i][j]) {
+					lowestj = j;
+					break;
+				}
+			}
+			if(lowestj != -1) break;
+		}
+		for(int j=43;j>=0;j--) {
+			for(int i=0;i<44;i++) {
+				if(!smallCityMap[i][j]) {
+					highestj = j;
+					break;
+				}
+			}
+			if(highestj != -1) break;
+		}
+		
+		
+		Point centroid = new Point((highesti + lowesti)/2,(highestj + lowestj)/2);
+		int[][] centroidMap = new int[4][4]; //[LILJ,LIHJ,HILJ,HIHJ][Li,Hi,Lj,Hj]
+		//Ugh i know it's messy
+		centroidMap[0][0] = Integer.MAX_VALUE;
+		centroidMap[0][2] = Integer.MAX_VALUE;
+		centroidMap[1][0] = Integer.MAX_VALUE;
+		centroidMap[1][2] = Integer.MAX_VALUE;
+		centroidMap[2][0] = Integer.MAX_VALUE;
+		centroidMap[2][2] = Integer.MAX_VALUE;
+		centroidMap[3][0] = Integer.MAX_VALUE;
+		centroidMap[3][2] = Integer.MAX_VALUE;
+		for(int i=0;i<44;i++) {
+			for(int j=0;j<44;j++) {
+				if(!smallCityMap[i][j]) {
+					if(i<centroid.x) {
+						if(j<centroid.y) {
+							if(i < centroidMap[0][0]) centroidMap[0][0] = i;
+							if(i > centroidMap[0][1]) centroidMap[0][1] = i;
+							if(j < centroidMap[0][2]) centroidMap[0][2] = j;
+							if(j > centroidMap[0][3]) centroidMap[0][3] = j;
+						}
+						else {
+							if(i < centroidMap[1][0]) centroidMap[1][0] = i;
+							if(i > centroidMap[1][1]) centroidMap[1][1] = i;
+							if(j < centroidMap[1][2]) centroidMap[1][2] = j;
+							if(j > centroidMap[1][3]) centroidMap[1][3] = j;
+						}
+					}
+					else {
+						if(j<centroid.y) {
+							if(i < centroidMap[2][0]) centroidMap[2][0] = i;
+							if(i > centroidMap[2][1]) centroidMap[2][1] = i;
+							if(j < centroidMap[2][2]) centroidMap[2][2] = j;
+							if(j > centroidMap[2][3]) centroidMap[2][3] = j;
+						}
+						else {
+							if(i < centroidMap[3][0]) centroidMap[3][0] = i;
+							if(i > centroidMap[3][1]) centroidMap[3][1] = i;
+							if(j < centroidMap[3][2]) centroidMap[3][2] = j;
+							if(j > centroidMap[3][3]) centroidMap[3][3] = j;
+						}
+					}
+				}
+			}
+		}
+		
+		Point[] centroids = new Point[4];
+		for(int i = 0; i < 4; i++) {
+			centroids[i] = new Point((centroidMap[i][0] + centroidMap[i][1])/2,(centroidMap[i][2] + centroidMap[i][3])/2);
+		}
+		
+		for(int i = 0;i<44;i++) {
+			for(int j=0;j<44;j++) {
+				boolean centroiddd = true;
+				for(int k = 0; k < 4; k++) {
+					if(i == centroids[k].x && j == centroids[k].y) {
+						System.out.print(2);
+						centroiddd = false;
+					}
+				}
+				if(centroiddd) {
+					System.out.print(smallCityMap[i][j] ? 0 : 1);
+				}
+			}
+			System.out.println();
+		}
+		
+		
 		//Rewrites the smaller map into a map of appropriate size
 		cityMap = new boolean[176][176];
 		
@@ -258,6 +372,8 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 		if (biomeModeIndex == 12 /* desert */) return true; //Just to make sure. This won't be needed once there are more biome cities
 		return false;
 	}
+	
+	
 	
 	public static class Start extends StructureStart<NoFeatureConfig> {
 		public Start(Structure<NoFeatureConfig> structureIn, int chunkX, int chunkZ,

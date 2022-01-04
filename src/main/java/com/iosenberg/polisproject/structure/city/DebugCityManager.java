@@ -106,5 +106,7 @@ public class DebugCityManager extends AbstractCityManager{
 //          }
 //      }
 		}
+		
+		
 	}
 }
