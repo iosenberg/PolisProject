@@ -8,9 +8,11 @@ import org.apache.logging.log4j.Level;
 
 import com.google.common.collect.ImmutableMap;
 import com.iosenberg.polisproject.PolisProject;
+import com.iosenberg.polisproject.dimension.PPWorldSavedData;
 import com.iosenberg.polisproject.structure.city.AbstractCityManager.Piece;
 import com.mojang.serialization.Codec;
 
+import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.Rotation;
 import net.minecraft.util.SharedSeedRandom;
 import net.minecraft.util.math.BlockPos;
@@ -328,7 +330,6 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 		int[] minDists = {Integer.MAX_VALUE,Integer.MAX_VALUE,Integer.MAX_VALUE,Integer.MAX_VALUE};
 		Point[] PoI = new Point[4]; //Points of Inaccessibility / Places of Interest
 		for(int i=0; i < 4; i++) {
-			int maxDistIndex = 0;
 			LinkedList<Point> list = districtList[i];
 			for(int j = 0; j < list.size(); j++) {
 				int dist = 0;
@@ -336,7 +337,6 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 					//Add distance from j to k to dist
 					dist += Math.abs(list.get(j).x - list.get(k).x) + Math.abs(list.get(j).y - list.get(k).y);
 				}
-				System.out.println("Dist for " + list.get(j).x + "," + list.get(j).y + " = " + dist);
 				if(dist < minDists[i]) {
 					minDists[i] = dist;
 					PoI[i] = list.get(j);
@@ -344,58 +344,6 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 			}
 		}
 		
-		
-		
-//		int[][] centroidMap = new int[4][4]; //[LILJ,LIHJ,HILJ,HIHJ][Li,Hi,Lj,Hj]
-//		//Ugh i know it's messy
-//		centroidMap[0][0] = Integer.MAX_VALUE;
-//		centroidMap[0][2] = Integer.MAX_VALUE;
-//		centroidMap[1][0] = Integer.MAX_VALUE;
-//		centroidMap[1][2] = Integer.MAX_VALUE;
-//		centroidMap[2][0] = Integer.MAX_VALUE;
-//		centroidMap[2][2] = Integer.MAX_VALUE;
-//		centroidMap[3][0] = Integer.MAX_VALUE;
-//		centroidMap[3][2] = Integer.MAX_VALUE;
-//		for(int i=0;i<44;i++) {
-//			for(int j=0;j<44;j++) {
-//				if(!smallCityMap[i][j]) {
-//					if(i<centroid.x) {
-//						if(j<centroid.y) {
-//							if(i < centroidMap[0][0]) centroidMap[0][0] = i;
-//							if(i > centroidMap[0][1]) centroidMap[0][1] = i;
-//							if(j < centroidMap[0][2]) centroidMap[0][2] = j;
-//							if(j > centroidMap[0][3]) centroidMap[0][3] = j;
-//						}
-//						else {
-//							if(i < centroidMap[1][0]) centroidMap[1][0] = i;
-//							if(i > centroidMap[1][1]) centroidMap[1][1] = i;
-//							if(j < centroidMap[1][2]) centroidMap[1][2] = j;
-//							if(j > centroidMap[1][3]) centroidMap[1][3] = j;
-//						}
-//					}
-//					else {
-//						if(j<centroid.y) {
-//							if(i < centroidMap[2][0]) centroidMap[2][0] = i;
-//							if(i > centroidMap[2][1]) centroidMap[2][1] = i;
-//							if(j < centroidMap[2][2]) centroidMap[2][2] = j;
-//							if(j > centroidMap[2][3]) centroidMap[2][3] = j;
-//						}
-//						else {
-//							if(i < centroidMap[3][0]) centroidMap[3][0] = i;
-//							if(i > centroidMap[3][1]) centroidMap[3][1] = i;
-//							if(j < centroidMap[3][2]) centroidMap[3][2] = j;
-//							if(j > centroidMap[3][3]) centroidMap[3][3] = j;
-//						}
-//					}
-//				}
-//			}
-//		}
-//		
-//		Point[] centroids = new Point[4];
-//		for(int i = 0; i < 4; i++) {
-//			centroids[i] = new Point((centroidMap[i][0] + centroidMap[i][1])/2,(centroidMap[i][2] + centroidMap[i][3])/2);
-//		}
-//		
 		
 		//All this is just a complex print statment
 		byte[][] printmap = new byte[44][44];
@@ -418,6 +366,7 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 			}
 			System.out.println();
 		}
+		//End print statement
 		
 		
 		//Rewrites the smaller map into a map of appropriate size
@@ -427,7 +376,22 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 			for(int j = 0; j < 176; j++) 
 				cityMap[i][j] = !smallCityMap[i/4][j/4]; //I'll think of a more efficient way to handle the boolean map later
 		
+		byte[] map = new byte[44*44];
+		for(int i = 0;i < 44*44; i++) {
+			map[i] = (byte)(smallCityMap[i/44][i%44] ? 0 : 1);
+		}
+		long[] anchors = {
+				BlockPos.asLong(PoI[0].x, height, PoI[0].y),
+				BlockPos.asLong(PoI[1].x, height, PoI[1].y),
+				BlockPos.asLong(PoI[2].x, height, PoI[2].y),
+				BlockPos.asLong(PoI[3].x, height, PoI[3].y)
+		};
+		
+		byte byteHeight = (byte)(heightModeIndex + Byte.MIN_VALUE);
+		byte biome = (byte)biomeModeIndex;
+		
 		//TODO: Later, these will be written into WorldSaveData
+		PPWorldSavedData.putCity(chunkX, chunkZ, byteHeight, biome, map, anchors);
 		DebugCityManager.height(heightModeIndex);
 		DebugCityManager.map(cityMap);
 		
@@ -450,13 +414,14 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 		public void generatePieces(DynamicRegistries dynamicRegistryManager, ChunkGenerator generator,
 				TemplateManager templateManagerIn, int chunkX, int chunkZ, Biome biomeIn, NoFeatureConfig config) {
 			
-			System.out.println("[" + chunkX + ", " + chunkZ + "]");
-			
-			//Rotation rotation = Rotation.NONE;
 			int x = chunkX << 4;
 			int z = chunkZ << 4;
-			int y = generator.getBaseHeight(x, z, Heightmap.Type.WORLD_SURFACE);
-			DebugCityManager.generatePieces(templateManagerIn, new BlockPos(x, y, z), Rotation.NONE, this.pieces, random);
+			int y = generator.getBaseHeight(x, z, Heightmap.Type.WORLD_SURFACE_WG);
+			
+			CompoundNBT city = PPWorldSavedData.getCity(chunkX, chunkZ);
+			int biome = city.getByte("biome");
+			
+			DebugCityManager.start(templateManagerIn, new BlockPos(x, y, z), city, this.pieces, random);
 			
 			this.calculateBoundingBox();
 		}

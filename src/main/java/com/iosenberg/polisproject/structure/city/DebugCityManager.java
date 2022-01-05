@@ -4,8 +4,10 @@ import java.util.List;
 import java.util.Random;
 
 import com.iosenberg.polisproject.PolisProject;
+import com.iosenberg.polisproject.dimension.PPWorldSavedData;
 import com.iosenberg.polisproject.init.PPStructures;
 import com.iosenberg.polisproject.structure.RoadJunctionStructurePiece;
+import com.iosenberg.polisproject.structure.city.AbstractCityManager.Piece;
 
 import net.minecraft.block.Blocks;
 import net.minecraft.nbt.CompoundNBT;
@@ -27,6 +29,7 @@ import net.minecraft.world.gen.feature.template.TemplateManager;
 
 public class DebugCityManager extends AbstractCityManager{
 	private static final ResourceLocation BLOCK = new ResourceLocation(PolisProject.MODID, "block");
+	private static final ResourceLocation ROADJUNCTION = new ResourceLocation(PolisProject.MODID, "road_junction");
 	private static boolean[][] map;
 	private static int height;
 
@@ -57,6 +60,40 @@ public class DebugCityManager extends AbstractCityManager{
 
 			}
 		}		
+	}
+	
+	public static void start(TemplateManager templateManager, BlockPos pos, CompoundNBT city, List<StructurePiece> pieceList, Random random) {
+		
+		System.out.println("pp");
+		int height = (int)(city.getByte("height"));
+		byte[] byteMap = city.getByteArray("map");
+		long[] anchors = city.getLongArray("anchors");
+		
+		byte[][] cityMap = new byte[176][176];
+		for(int i = 0; i < 176; i++) {
+			for(int j = 0; j < 176; j++) {
+				cityMap[i][j] = byteMap[(i/4)*44 + (j/4)];
+				System.out.print(cityMap[i][j]);
+			}
+			System.out.println();
+		}
+		
+		int offset = 80;
+		
+		for (int i = 0; i < 176; i+=4) {
+			for (int j = 0; j < 176; j+=4) {
+				int x = i - offset + pos.getX();
+				int z = j - offset + pos.getZ();
+				if(cityMap[i][j] == 1) {
+					System.out.println("Placed at : " + i + "," + j + " : " + x + "," + height + "," + z);
+					pieceList.add(new DebugCityManager.Piece(templateManager, BLOCK, new BlockPos(x, height, z), Rotation.NONE));
+				}
+			}
+		}
+		
+		for(int i = 0; i < anchors.length; i++) {
+			pieceList.add(new DebugCityManager.Piece(templateManager, ROADJUNCTION, BlockPos.of(anchors[i]), Rotation.NONE));
+		}
 	}
 
 	//quick fix. need to put this somewhere else

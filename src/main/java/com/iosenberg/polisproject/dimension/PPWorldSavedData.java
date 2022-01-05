@@ -16,8 +16,8 @@ import net.minecraft.world.storage.WorldSavedData;
 public class PPWorldSavedData extends WorldSavedData{
 	private static final String ROAD_DATA = PolisProject.MODID + "RoadMap";
 	private static final PPWorldSavedData CLIENT_DUMMY = new PPWorldSavedData();
-	private CompoundNBT roadMap = new CompoundNBT(); //A map of Roads. 
-	private CompoundNBT cityMap = new CompoundNBT(); //A map of cities.
+	private static CompoundNBT roadMap = new CompoundNBT(); //A map of Roads. 
+	private static CompoundNBT cityMap = new CompoundNBT(); //A map of cities.
 	//Road is an NBT with the key "x,y", and Boolean East (x+), West (x-), South (z+), North (z-)
 	
 	public PPWorldSavedData() {
@@ -41,20 +41,23 @@ public class PPWorldSavedData extends WorldSavedData{
 	@Override
 	public CompoundNBT save(CompoundNBT data) {
 		data.put("RoadMap", roadMap);
+		data.put("CityMap", cityMap);
 		return data;
 	}
 	
-	public void putCity(int chunkX, int chunkZ, byte height, byte biome, boolean[][] map, long[] anchors) {
+	public static void putCity(int chunkX, int chunkZ, byte height, byte biome, byte[] map, long[] anchors) {
 		CompoundNBT newCity = new CompoundNBT();
 
 		newCity.putByte("height", height);
 		newCity.putByte("biome", biome);
-		
-		//need to figure out maps.....
-		
+		newCity.putByteArray("map", map);
 		newCity.putLongArray("anchors", anchors); //stores blockpos of anchors
 		
 		cityMap.put(chunkX + "," + chunkZ, newCity);
+	}
+	
+	public static CompoundNBT getCity(int chunkX, int chunkZ) {
+		return cityMap.getCompound(chunkX + "," + chunkZ);
 	}
 
 	//Puts a RoadNBT into roadMap. Key is "x,y" of the chunk, and it contains a boolean for each direction, whether it connects to a road
