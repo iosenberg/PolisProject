@@ -57,7 +57,9 @@ public class PPWorldSavedData extends WorldSavedData{
 	}
 	
 	public static CompoundNBT getCity(int chunkX, int chunkZ) {
-		return cityMap.getCompound(chunkX + "," + chunkZ);
+		CompoundNBT city = cityMap.getCompound(chunkX + "," + chunkZ);
+		cityMap.remove(chunkX + "," + chunkZ);
+		return city;
 	}
 
 	//Puts a RoadNBT into roadMap. Key is "x,y" of the chunk, and it contains a boolean for each direction, whether it connects to a road

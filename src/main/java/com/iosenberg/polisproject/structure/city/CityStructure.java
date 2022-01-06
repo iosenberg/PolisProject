@@ -164,8 +164,7 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 				boolean notHighesti = i != 43;
 				boolean notLowestj = j != 0;
 				boolean notHighestj = j != 43;
-				//TODO ^Consider removing if any of these are false
-				
+							
 				//Checks each opposite pair of cells around it
 				if((notLowesti && notHighesti) && (smallCityMap[i-1][j] && smallCityMap[i+1][j]))
 					smallCityMap[i][j] = true;
@@ -178,6 +177,9 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 						if (smallCityMap[i-1][j+1] && smallCityMap[i+1][j-1])
 							smallCityMap[i][j] = true;
 				}
+				//Check if cell is on the side
+				if(!notLowesti || !notHighesti || !notLowestj || !notHighestj)
+					smallCityMap[i][j] = true;
 				
 				//If value has changed, enqueue valid neighbors
 				if(smallCityMap[i][j]) {
@@ -239,7 +241,7 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 						maxSizeIndex = i;
 		
 		//If island is not large enough, returns false: no city
-		if(islandSizeList.get(maxSizeIndex) < 500) return false;
+		if(islandSizeList.get(maxSizeIndex) < 1100) return false;
 		
 		//Sets all cells not in the island to true;
 		for(int i = 0; i < 44; i++)
@@ -345,28 +347,28 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 		}
 		
 		
-		//All this is just a complex print statment
-		byte[][] printmap = new byte[44][44];
-		for(int i = 0;i<44;i++) {
-			for(int j = 0;j<44;j++) {
-				printmap[i][j] = (byte) (smallCityMap[i][j] ? 0 : 1);
-			}
-		}
-		
-		for(int i = 0; i < 4;i++) {
-			for(int j = 0; j < districtList[i].size(); j++) {
-				printmap[((Point)districtList[i].get(j)).x][((Point)districtList[i].get(j)).y] = (byte)(i+1);
-			}
-			printmap[PoI[i].x][PoI[i].y] = 8; 
-		}
-		
-		for(int i = 0;i<44;i++) {
-			for(int j=0;j<44;j++) {
-				System.out.print(printmap[i][j] == 0 ? "." : printmap[i][j]);
-			}
-			System.out.println();
-		}
-		//End print statement
+//		//All this is just a complex print statment
+//		byte[][] printmap = new byte[44][44];
+//		for(int i = 0;i<44;i++) {
+//			for(int j = 0;j<44;j++) {
+//				printmap[i][j] = (byte) (smallCityMap[i][j] ? 0 : 1);
+//			}
+//		}
+//		
+//		for(int i = 0; i < 4;i++) {
+//			for(int j = 0; j < districtList[i].size(); j++) {
+//				printmap[((Point)districtList[i].get(j)).x][((Point)districtList[i].get(j)).y] = (byte)(i+1);
+//			}
+//			printmap[PoI[i].x][PoI[i].y] = 8; 
+//		}
+//		
+//		for(int i = 0;i<44;i++) {
+//			for(int j=0;j<44;j++) {
+//				System.out.print(printmap[i][j] == 0 ? "." : printmap[i][j]);
+//			}
+//			System.out.println();
+//		}
+//		//End print statement
 		
 		
 		//Rewrites the smaller map into a map of appropriate size
@@ -381,10 +383,10 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 			map[i] = (byte)(smallCityMap[i/44][i%44] ? 0 : 1);
 		}
 		long[] anchors = {
-				BlockPos.asLong(PoI[0].x, height, PoI[0].y),
-				BlockPos.asLong(PoI[1].x, height, PoI[1].y),
-				BlockPos.asLong(PoI[2].x, height, PoI[2].y),
-				BlockPos.asLong(PoI[3].x, height, PoI[3].y)
+				BlockPos.asLong(PoI[0].x*4 + x - 80, heightModeIndex, PoI[0].y*4 + z - 80),
+				BlockPos.asLong(PoI[1].x*4 + x - 80, heightModeIndex, PoI[1].y*4 + z - 80),
+				BlockPos.asLong(PoI[2].x*4 + x - 80, heightModeIndex, PoI[2].y*4 + z - 80),
+				BlockPos.asLong(PoI[3].x*4 + x - 80, heightModeIndex, PoI[3].y*4 + z - 80)
 		};
 		
 		byte byteHeight = (byte)(heightModeIndex + Byte.MIN_VALUE);
@@ -394,8 +396,6 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 		PPWorldSavedData.putCity(chunkX, chunkZ, byteHeight, biome, map, anchors);
 		DebugCityManager.height(heightModeIndex);
 		DebugCityManager.map(cityMap);
-		
-		System.out.println(chunkPos.toString());
 		
 		if (biomeModeIndex == 12 /* desert */) return true; //Just to make sure. This won't be needed once there are more biome cities
 		return false;
