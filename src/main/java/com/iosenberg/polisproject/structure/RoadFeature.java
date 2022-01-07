@@ -1,5 +1,6 @@
 package com.iosenberg.polisproject.structure;
 
+import java.util.PriorityQueue;
 import java.util.Random;
 
 import com.iosenberg.polisproject.dimension.PPWorldSavedData;
@@ -77,21 +78,85 @@ public class RoadFeature extends Feature<NoFeatureConfig>{
 		//Run a variant of Dijkstra's algorithm
 		boolean[][] visited = new boolean[xMax][zMax];
 		int[][] distance = new int[xMax][zMax];
+		ChunkPos[][] previousChunk = new ChunkPos[xMax][zMax];
 		for(int i = 0; i < xMax; i++) {
 			for(int j = 0; j < zMax; j++) {
 				distance[i][j] = Integer.MAX_VALUE;
 			}
 		}
 		
-		//mnyeh, I don't feel like implementing a priority queue rn
-	}
+		//This implementation feels incredibly gross, but Java's implementation of priority queue is gross so oh well
+		PriorityQueue<ChunkPos> queue = new PriorityQueue<ChunkPos>((a, b) -> distance[a.x][a.z] - distance[b.x][b.z]);
+		distance[s.x][s.z] = 0; 
+		queue.offer(s);
+		visited[s.x][s.z] = true;
+		while(!visited[d.x][d.z]) {
+			ChunkPos pos = queue.poll();
+			visited[pos.x][pos.z] = true; 
+			if(pos.x > 0 && !visited[pos.x - 1][pos.z]) {
+				int tx = pos.x - 1; //target x
+				int tz = pos.z; //target z
+				//"distance" is equal to the stDev of the target chunk + the difference in average height of the to chunks
+				int tempDist = stDevMap[tx][tz] + Math.abs(meanMap[tx][tz] - meanMap[pos.x][pos.z]);
+				if(tempDist < distance[tx][tz]) {
+					distance[tx][tz] = tempDist;
+					previousChunk[tx][tz] = pos;
+					ChunkPos chunk = new ChunkPos(tx,tz);
+					if(!queue.contains(chunk)) queue.offer(chunk);
+				}
+			}
+			if(pos.x < xMax - 1 && !visited[pos.x + 1][pos.z]) {
+				int tx = pos.x + 1; //target x
+				int tz = pos.z; //target z
+				int tempDist = stDevMap[tx][tz] + Math.abs(meanMap[tx][tz] - meanMap[pos.x][pos.z]);
+				if(tempDist < distance[tx][tz]) {
+					distance[tx][tz] = tempDist;
+					previousChunk[tx][tz] = pos;
+					ChunkPos chunk = new ChunkPos(tx,tz);
+					if(!queue.contains(chunk)) queue.offer(chunk);
+				}
+			}
+			if(pos.z > 0 && !visited[pos.x][pos.z - 1]) {
+				int tx = pos.x; //target x
+				int tz = pos.z - 1; //target z
+				int tempDist = stDevMap[tx][tz] + Math.abs(meanMap[tx][tz] - meanMap[pos.x][pos.z]);
+				if(tempDist < distance[tx][tz]) {
+					distance[tx][tz] = tempDist;
+					previousChunk[tx][tz] = pos;
+					ChunkPos chunk = new ChunkPos(tx,tz);
+					if(!queue.contains(chunk)) queue.offer(chunk);
+				}
+			}
+			if(pos.z < zMax - 1 && !visited[pos.x][pos.z + 1]) {
+				int tx = pos.x; //target x
+				int tz = pos.z + 1; //target z
+				int tempDist = stDevMap[tx][tz] + Math.abs(meanMap[tx][tz] - meanMap[pos.x][pos.z]);
+				if(tempDist < distance[tx][tz]) {
+					distance[tx][tz] = tempDist;
+					previousChunk[tx][tz] = pos;
+					ChunkPos chunk = new ChunkPos(tx,tz);
+					if(!queue.contains(chunk)) queue.offer(chunk);
+				}
+			}
+		}
+		
+		//Finished algorithm. The path is stored in previousChunk[]
+		ChunkPos chunk = previousChunk[d.x][d.z];
+		while(!chunk.equals(s)) {
+			PPWorldSavedData.putRoad(chunk.x + offset.x, chunk.z + offset.z);
+			System.out.println((chunk.x + offset.x) + "," + (chunk.z + offset.z));
+			chunk = previousChunk[chunk.x][chunk.z];
+		}
+	}	
 
 	@Override
 	public boolean place(ISeedReader reader, ChunkGenerator generator, Random rand, BlockPos pos,
 			NoFeatureConfig config) {
 		String key = (pos.getX() >> 4) + "," + (pos.getZ() >> 4);
+		System.out.println("Called on " + key);
 		CompoundNBT roadNBT = PPWorldSavedData.getRoad(key);
 		if(roadNBT == null) return false;
+		System.out.println("uh yuhhhh");
 		BlockPos.Mutable blockpos$Mutable = new BlockPos.Mutable();//.setPos(new BlockPos(x,y,z));
 		for (int i=0;i<16;i++)
 			for (int j=0;j<16;j++) {

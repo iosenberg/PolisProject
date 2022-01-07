@@ -9,6 +9,8 @@ import org.apache.logging.log4j.Level;
 import com.google.common.collect.ImmutableMap;
 import com.iosenberg.polisproject.PolisProject;
 import com.iosenberg.polisproject.dimension.PPWorldSavedData;
+import com.iosenberg.polisproject.init.PPStructures;
+import com.iosenberg.polisproject.structure.RoadFeature;
 import com.iosenberg.polisproject.structure.city.AbstractCityManager.Piece;
 import com.mojang.serialization.Codec;
 
@@ -396,7 +398,8 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 		PPWorldSavedData.putCity(chunkX, chunkZ, byteHeight, biome, map, anchors);
 		DebugCityManager.height(heightModeIndex);
 		DebugCityManager.map(cityMap);
-		
+		RoadFeature.generateRoads(chunkPos, PPStructures.ROAD_JUNCTION.getPotentialFeatureChunk(generator.getSettings().getConfig(PPStructures.ROAD_JUNCTION), seed, seedRand, chunkX, chunkZ), new ChunkPos[1], generator);
+		System.out.println(PPStructures.ROAD_JUNCTION.getPotentialFeatureChunk(generator.getSettings().getConfig(PPStructures.ROAD_JUNCTION), seed, seedRand, chunkX, chunkZ).toString());
 		if (biomeModeIndex == 12 /* desert */) return true; //Just to make sure. This won't be needed once there are more biome cities
 		return false;
 	}

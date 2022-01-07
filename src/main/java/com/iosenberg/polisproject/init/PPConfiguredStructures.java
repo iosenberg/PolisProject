@@ -6,13 +6,14 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.util.registry.WorldGenRegistries;
 import net.minecraft.world.gen.FlatGenerationSettings;
+import net.minecraft.world.gen.feature.ConfiguredFeature;
 import net.minecraft.world.gen.feature.IFeatureConfig;
 import net.minecraft.world.gen.feature.StructureFeature;
 
 public class PPConfiguredStructures {
 	public static StructureFeature<?,?> CONFIGURED_ROAD_JUNCTION = PPStructures.ROAD_JUNCTION.configured(IFeatureConfig.NONE);
 	public static StructureFeature<?,?> CONFIGURED_CITY = PPStructures.CITY.configured(IFeatureConfig.NONE);
-//	public static ConfiguredFeature<?,?> CONFIGURED_ROAD_FEATURE = PolisStructures.ROAD_FEATURE.configured(IFeatureConfig.NONE);
+	public static ConfiguredFeature<?,?> CONFIGURED_ROAD_FEATURE = PPStructures.ROAD_FEATURE.configured(IFeatureConfig.NONE);
 	
 	public static void registerConfiguredStructures() {		
 		Registry<StructureFeature<?,?>> registry = WorldGenRegistries.CONFIGURED_STRUCTURE_FEATURE;

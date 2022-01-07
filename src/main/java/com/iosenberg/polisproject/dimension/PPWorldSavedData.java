@@ -61,6 +61,11 @@ public class PPWorldSavedData extends WorldSavedData{
 		cityMap.remove(chunkX + "," + chunkZ);
 		return city;
 	}
+	
+	public static void putRoad(int chunkX, int chunkZ) {
+		CompoundNBT road = new CompoundNBT();
+		roadMap.put(chunkX + "," + chunkZ, road);
+	}
 
 	//Puts a RoadNBT into roadMap. Key is "x,y" of the chunk, and it contains a boolean for each direction, whether it connects to a road
 	//These functions need to be cleaned up a lot. Need to stop using Points and need to fix y to z

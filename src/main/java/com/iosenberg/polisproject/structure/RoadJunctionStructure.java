@@ -39,8 +39,8 @@ public class RoadJunctionStructure extends Structure<NoFeatureConfig>{
 	protected boolean isFeatureChunk(ChunkGenerator generator, BiomeProvider biomeProviderIn, long seed,
 			SharedSeedRandom seedRand, int chunkX, int chunkZ, Biome biomeIn, ChunkPos chunkPos,
 			NoFeatureConfig config) {
-		ChunkPos cityChunk = PPStructures.CITY.getPotentialFeatureChunk(generator.getSettings().getConfig(PPStructures.CITY), seed, seedRand, chunkX, chunkZ);
-		if(Math.sqrt((cityChunk.x - chunkX)^2 + (cityChunk.z - chunkZ)^2) < 40) return false;
+		if(chunkPos.getChessboardDistance(PPStructures.CITY.getPotentialFeatureChunk(generator.getSettings().getConfig(PPStructures.CITY), seed, seedRand, chunkX, chunkZ))
+				< 50) return false; //if nearest City is < 50 chunks away
 		String biome = biomeIn.getBiomeCategory().toString();
 		if(biome.equals("OCEAN") || biome.equals("EXTREME_HILLS")) return false;
 		return true;
