@@ -92,6 +92,13 @@ public class PPWorldSavedData extends WorldSavedData{
 		}
 	}
 	
+	public static CompoundNBT getRoad(String key) {
+		if(!roadMap.contains(key)) return null;
+		CompoundNBT road = roadMap.getCompound(key);
+		roadMap.remove(key);
+		return road;
+	}
+	
 	//I don't think I need this, but I might, so I'm just commenting it out for now
 //	public void put(Point chunk, Point chunkto, BlockPos startpos) {}
 }
