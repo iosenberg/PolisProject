@@ -17,8 +17,21 @@ import net.minecraft.world.gen.feature.Feature;
 import net.minecraft.world.gen.feature.NoFeatureConfig;
 
 public class RoadFeature extends Feature<NoFeatureConfig>{
+	static final int JUNCTION_SPACE = 64;
+	
 	public RoadFeature(Codec<NoFeatureConfig> configFactory) {
 		super(configFactory);
+	}
+	
+	//Rounds x and z to nearest multiple of 64 for now
+	public static ChunkPos findJunction(ChunkPos pos) {
+		int lowerX = (pos.x / JUNCTION_SPACE) * JUNCTION_SPACE;
+		int upperX = lowerX + JUNCTION_SPACE;
+		int lowerZ = (pos.z / JUNCTION_SPACE) * JUNCTION_SPACE;
+		int upperZ = lowerZ + JUNCTION_SPACE;
+		int x = (pos.x - lowerX > upperX - pos.x) ? upperX : lowerX; 
+		int z = (pos.z - lowerZ > upperZ - pos.z) ? upperZ : lowerZ; 
+		return new ChunkPos(x, z);
 	}
 	
 	public static void generateRoads(ChunkPos source, ChunkPos destination, ChunkPos[] illegalChunks, ChunkGenerator generator) {
@@ -153,7 +166,6 @@ public class RoadFeature extends Feature<NoFeatureConfig>{
 	public boolean place(ISeedReader reader, ChunkGenerator generator, Random rand, BlockPos pos,
 			NoFeatureConfig config) {
 		String key = (pos.getX() >> 4) + "," + (pos.getZ() >> 4);
-		System.out.println("Called on " + key);
 		CompoundNBT roadNBT = PPWorldSavedData.getRoad(key);
 		if(roadNBT == null) return false;
 		System.out.println("uh yuhhhh");

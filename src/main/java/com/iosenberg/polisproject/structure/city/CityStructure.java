@@ -66,6 +66,10 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 		
 		ChunkPos villageChunk = Structure.VILLAGE.getPotentialFeatureChunk(generator.getSettings().getConfig(Structure.VILLAGE), seed, seedRand, chunkX, chunkZ);
 		if(Math.sqrt((villageChunk.x - chunkX)^2 + (villageChunk.z - chunkZ)^2) < 19) return false; //19 is the number required for the radius to contain all of the city's borders
+		ChunkPos junctionChunktion = RoadFeature.findJunction(chunkPos);
+				//PPStructures.ROAD_JUNCTION.getPotentialFeatureChunk(generator.getSettings().getConfig(PPStructures.ROAD_JUNCTION), seed, seedRand, chunkX, chunkZ);
+//		if(junctionChunktion.getChessboardDistance(chunkPos) < 15) return false; //Don't spawn if too close to a junction
+		
 		
 		int x = chunkX << 4;
 		int z = chunkZ << 4;
@@ -394,12 +398,11 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 		byte byteHeight = (byte)(heightModeIndex + Byte.MIN_VALUE);
 		byte biome = (byte)biomeModeIndex;
 		
+		PolisProject.LOGGER.log(Level.DEBUG,chunkPos.toString() + " to " + junctionChunktion.toString());
 		//TODO: Later, these will be written into WorldSaveData
 		PPWorldSavedData.putCity(chunkX, chunkZ, byteHeight, biome, map, anchors);
-		DebugCityManager.height(heightModeIndex);
-		DebugCityManager.map(cityMap);
-		RoadFeature.generateRoads(chunkPos, PPStructures.ROAD_JUNCTION.getPotentialFeatureChunk(generator.getSettings().getConfig(PPStructures.ROAD_JUNCTION), seed, seedRand, chunkX, chunkZ), new ChunkPos[1], generator);
-		System.out.println(PPStructures.ROAD_JUNCTION.getPotentialFeatureChunk(generator.getSettings().getConfig(PPStructures.ROAD_JUNCTION), seed, seedRand, chunkX, chunkZ).toString());
+		RoadFeature.generateRoads(chunkPos, junctionChunktion, new ChunkPos[1], generator);
+		System.out.println(junctionChunktion.toString());
 		if (biomeModeIndex == 12 /* desert */) return true; //Just to make sure. This won't be needed once there are more biome cities
 		return false;
 	}

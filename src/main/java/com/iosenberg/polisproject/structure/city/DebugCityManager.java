@@ -33,37 +33,27 @@ public class DebugCityManager extends AbstractCityManager{
 	private static final ResourceLocation BLOCK = new ResourceLocation(PolisProject.MODID, "block");
 	private static final ResourceLocation ROADJUNCTION = new ResourceLocation(PolisProject.MODID, "road_junction");
 	private static final ResourceLocation STREET = new ResourceLocation(PolisProject.MODID, "street");
-	private static boolean[][] map;
-	private static int height;
 
 	public static byte[][] generateMap(ChunkGenerator generator, int chunkX, int chunkZ) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 	
-	public static void map(boolean[][] mapIn) {
-		map = mapIn;
-	}
-	
-	public static void height(int H) {
-		height = H;
-	}
-
-	public static void generatePieces(TemplateManager templateManager, BlockPos pos, Rotation rotation,
-			List<StructurePiece> pieceList, Random random) {
-
-		//int size = 5;
-		int offset = 80;
-		
-		for (int i = 0; i < 176; i+=4) {
-			for (int j = 0; j < 176; j+=4) {
-				int x = i - offset + pos.getX();
-				int z = j - offset + pos.getZ();
-				if(map[i][j]) pieceList.add(new DebugCityManager.Piece(templateManager, BLOCK, new BlockPos(x, height, z), rotation));
-
-			}
-		}		
-	}
+//	public static void generatePieces(TemplateManager templateManager, BlockPos pos, Rotation rotation,
+//			List<StructurePiece> pieceList, Random random) {
+//
+//		//int size = 5;
+//		int offset = 80;
+//		
+//		for (int i = 0; i < 176; i+=4) {
+//			for (int j = 0; j < 176; j+=4) {
+//				int x = i - offset + pos.getX();
+//				int z = j - offset + pos.getZ();
+//				if(map[i][j]) pieceList.add(new DebugCityManager.Piece(templateManager, BLOCK, new BlockPos(x, height, z), rotation));
+//
+//			}
+//		}		
+//	}
 	
 	public static void start(TemplateManager templateManager, BlockPos pos, CompoundNBT city, List<StructurePiece> pieceList, Random random) {
 		
