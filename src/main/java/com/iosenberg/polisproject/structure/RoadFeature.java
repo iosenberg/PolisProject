@@ -109,8 +109,8 @@ public class RoadFeature extends Feature<NoFeatureConfig>{
 			if(pos.x > 0 && !visited[pos.x - 1][pos.z]) {
 				int tx = pos.x - 1; //target x
 				int tz = pos.z; //target z
-				//"distance" is equal to the stDev of the target chunk + the difference in average height of the to chunks
-				int tempDist = stDevMap[tx][tz] + Math.abs(meanMap[tx][tz] - meanMap[pos.x][pos.z]);
+				//"distance" is equal to the stDev of the target chunk + the difference in average height of the to chunks + distance of previous chunk + 1
+				int tempDist = stDevMap[tx][tz] + Math.abs(meanMap[tx][tz] - meanMap[pos.x][pos.z]) + distance[pos.x][pos.z] + 1;
 				if(tempDist < distance[tx][tz]) {
 					distance[tx][tz] = tempDist;
 					previousChunk[tx][tz] = pos;
@@ -121,7 +121,7 @@ public class RoadFeature extends Feature<NoFeatureConfig>{
 			if(pos.x < xMax - 1 && !visited[pos.x + 1][pos.z]) {
 				int tx = pos.x + 1; //target x
 				int tz = pos.z; //target z
-				int tempDist = stDevMap[tx][tz] + Math.abs(meanMap[tx][tz] - meanMap[pos.x][pos.z]);
+				int tempDist = stDevMap[tx][tz] + Math.abs(meanMap[tx][tz] - meanMap[pos.x][pos.z]) + distance[pos.x][pos.z] + 1;
 				if(tempDist < distance[tx][tz]) {
 					distance[tx][tz] = tempDist;
 					previousChunk[tx][tz] = pos;
@@ -132,7 +132,7 @@ public class RoadFeature extends Feature<NoFeatureConfig>{
 			if(pos.z > 0 && !visited[pos.x][pos.z - 1]) {
 				int tx = pos.x; //target x
 				int tz = pos.z - 1; //target z
-				int tempDist = stDevMap[tx][tz] + Math.abs(meanMap[tx][tz] - meanMap[pos.x][pos.z]);
+				int tempDist = stDevMap[tx][tz] + Math.abs(meanMap[tx][tz] - meanMap[pos.x][pos.z]) + distance[pos.x][pos.z] + 1;
 				if(tempDist < distance[tx][tz]) {
 					distance[tx][tz] = tempDist;
 					previousChunk[tx][tz] = pos;
@@ -143,7 +143,7 @@ public class RoadFeature extends Feature<NoFeatureConfig>{
 			if(pos.z < zMax - 1 && !visited[pos.x][pos.z + 1]) {
 				int tx = pos.x; //target x
 				int tz = pos.z + 1; //target z
-				int tempDist = stDevMap[tx][tz] + Math.abs(meanMap[tx][tz] - meanMap[pos.x][pos.z]);
+				int tempDist = stDevMap[tx][tz] + Math.abs(meanMap[tx][tz] - meanMap[pos.x][pos.z]) + distance[pos.x][pos.z] + 1;
 				if(tempDist < distance[tx][tz]) {
 					distance[tx][tz] = tempDist;
 					previousChunk[tx][tz] = pos;
@@ -151,13 +151,14 @@ public class RoadFeature extends Feature<NoFeatureConfig>{
 					if(!queue.contains(chunk)) queue.offer(chunk);
 				}
 			}
+			
 		}
 		
 		//Finished algorithm. The path is stored in previousChunk[]
 		ChunkPos chunk = previousChunk[d.x][d.z];
 		while(!chunk.equals(s)) {
 			PPWorldSavedData.putRoad(chunk.x + offset.x, chunk.z + offset.z);
-			System.out.println((chunk.x + offset.x) + "," + (chunk.z + offset.z));
+			System.out.println((chunk.x + offset.x) + "," + (chunk.z + offset.z) + " : " + distance[chunk.x][chunk.z]);
 			chunk = previousChunk[chunk.x][chunk.z];
 		}
 	}	

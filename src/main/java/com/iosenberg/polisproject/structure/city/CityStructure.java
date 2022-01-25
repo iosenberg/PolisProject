@@ -1,6 +1,7 @@
 package com.iosenberg.polisproject.structure.city;
 
 import java.awt.Point;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Map;
 
@@ -68,7 +69,7 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 		if(Math.sqrt((villageChunk.x - chunkX)^2 + (villageChunk.z - chunkZ)^2) < 19) return false; //19 is the number required for the radius to contain all of the city's borders
 		ChunkPos junctionChunktion = RoadFeature.findJunction(chunkPos);
 				//PPStructures.ROAD_JUNCTION.getPotentialFeatureChunk(generator.getSettings().getConfig(PPStructures.ROAD_JUNCTION), seed, seedRand, chunkX, chunkZ);
-//		if(junctionChunktion.getChessboardDistance(chunkPos) < 15) return false; //Don't spawn if too close to a junction
+		if(junctionChunktion.getChessboardDistance(chunkPos) < 15) return false; //Don't spawn if too close to a junction
 		
 		
 		int x = chunkX << 4;
@@ -304,12 +305,12 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 		Point centroid = new Point((highesti + lowesti)/2,(highestj + lowestj)/2);
 		
 		//Gonna try point of inaccessibility instead of centroid
-		
-		LinkedList[] districtList = {
-				new LinkedList<Point>(), //LILJ
-				new LinkedList<Point>(), //LIHJ
-				new LinkedList<Point>(), //HILJ
-				new LinkedList<Point>()  //HIHJ
+		//TODO Find a better system than an array of ArrayLists
+		ArrayList[] districtList = {
+				new ArrayList<Point>(), //LILJ
+				new ArrayList<Point>(), //LIHJ
+				new ArrayList<Point>(), //HILJ
+				new ArrayList<Point>()  //HIHJ
 		};
 		
 		for(int i=0;i<44;i++) {
@@ -338,7 +339,7 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 		int[] minDists = {Integer.MAX_VALUE,Integer.MAX_VALUE,Integer.MAX_VALUE,Integer.MAX_VALUE};
 		Point[] PoI = new Point[4]; //Points of Inaccessibility / Places of Interest
 		for(int i=0; i < 4; i++) {
-			LinkedList<Point> list = districtList[i];
+			ArrayList<Point> list = districtList[i];
 			for(int j = 0; j < list.size(); j++) {
 				int dist = 0;
 				for(int k = 0; k < districtList[i].size(); k++) {
@@ -399,11 +400,10 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 		byte biome = (byte)biomeModeIndex;
 		
 		PolisProject.LOGGER.log(Level.DEBUG,chunkPos.toString() + " to " + junctionChunktion.toString());
-		//TODO: Later, these will be written into WorldSaveData
 		PPWorldSavedData.putCity(chunkX, chunkZ, byteHeight, biome, map, anchors);
 		RoadFeature.generateRoads(chunkPos, junctionChunktion, new ChunkPos[1], generator);
 		System.out.println(junctionChunktion.toString());
-		if (biomeModeIndex == 12 /* desert */) return true; //Just to make sure. This won't be needed once there are more biome cities
+		if (biomeModeIndex == 12 /* desert */) return true; //TODO Take this out once there are more biome cities
 		return false;
 	}
 	
