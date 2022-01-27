@@ -1,7 +1,5 @@
 package com.iosenberg.polisproject.dimension;
 
-import java.awt.Point;
-
 import com.iosenberg.polisproject.PolisProject;
 
 import net.minecraft.nbt.CompoundNBT;
@@ -45,48 +43,57 @@ public class PPWorldSavedData extends WorldSavedData{
 		return data;
 	}
 	
-	public static void putCity(int chunkX, int chunkZ, byte height, byte biome, byte[] map, long[] anchors) {
+	/**
+	 * Places a new city NBT in World Saved Data
+	 * 
+	 * @param chunk - the chunk of the City structure. Key for a city in WorldSavedData is chunk.toString()
+	 * @param height - the height of the floor of the city stored as (realHeight - Byte.MAX_VALUE)
+	 * @param biome - the enumerated biome category of the city
+	 * @param map - a 2 dimensional array of booleans, each representing whether the matching BlockPos should be part of the City structure
+	 * @param anchors - an array of BlockPos holding the locations of anchors within the city
+	 */
+	public static void putCity(ChunkPos chunk, byte height, byte biome, byte[] map, long[] anchors) {
 		CompoundNBT newCity = new CompoundNBT();
 
 		newCity.putByte("height", height);
 		newCity.putByte("biome", biome);
 		newCity.putByteArray("map", map);
-		newCity.putLongArray("anchors", anchors); //stores blockpos of anchors
+		newCity.putLongArray("anchors", anchors);
 		
-		cityMap.put(chunkX + "," + chunkZ, newCity);
+		cityMap.put(chunk.toString(), newCity);
 	}
 	
-	public static CompoundNBT getCity(int chunkX, int chunkZ) {
-		CompoundNBT city = cityMap.getCompound(chunkX + "," + chunkZ);
-		cityMap.remove(chunkX + "," + chunkZ);
+	public static CompoundNBT getCity(ChunkPos chunk) {
+		CompoundNBT city = cityMap.getCompound(chunk.toString());
+		cityMap.remove(chunk.toString());
 		return city;
 	}
 	
-	public static void putRoad(int chunkX, int chunkZ) {
-		CompoundNBT road = new CompoundNBT();
-		roadMap.put(chunkX + "," + chunkZ, road);
-	}
-
-	//Puts a RoadNBT into roadMap. Key is "x,y" of the chunk, and it contains a boolean for each direction, whether it connects to a road
-	//These functions need to be cleaned up a lot. Need to stop using Points and need to fix y to z
-	public void put(Point chunk, Point chunkto, Point chunkfrom) {
+	/**
+	 * Places a new road NBT in World Saved Data, along with calculated direction of adjacent roads
+	 * Notes that East = +x, West = -x, South = +z, North = -z
+	 * 
+	 * @param chunk - the chunk of Road feature. Key for a road in WorldSavedData is chunk.toString()
+	 * @param previousChunk - an adjacent chunk
+	 */
+	public static void putRoad(ChunkPos chunk, ChunkPos previousChunk) {
 		int x = chunk.x;
-		int y = chunk.y;
+		int z = chunk.z;
 		Boolean East = false;
 		Boolean West = false;
 		Boolean South = false;
 		Boolean North = false;
-		if (chunkto.x > x || chunkfrom.x > x) East = true;
-		if (chunkto.x < x || chunkfrom.x < x) West = true;
-		if (chunkto.y > y || chunkfrom.y > y) South = true;
-		if (chunkto.y < y || chunkfrom.y < y) North = true;
-		String key = chunk.x + "," + chunk.y;
+		if (previousChunk.x > x) East = true;
+		if (previousChunk.x < x) West = true;
+		if (previousChunk.z > z) South = true;
+		if (previousChunk.z < z) North = true;
+		String key = chunk.toString();
 		if(roadMap.contains(key)) {
 			roadMap.getCompound(key).putBoolean("East", roadMap.getCompound(key).getBoolean("East") || East);
 			roadMap.getCompound(key).putBoolean("West", roadMap.getCompound(key).getBoolean("West") || West);
 			roadMap.getCompound(key).putBoolean("South", roadMap.getCompound(key).getBoolean("South") || South);
 			roadMap.getCompound(key).putBoolean("North", roadMap.getCompound(key).getBoolean("North") || North);
-	}
+		}
 		else {
 			CompoundNBT newRoad = new CompoundNBT();
 			newRoad.putBoolean("East", East);
@@ -97,13 +104,11 @@ public class PPWorldSavedData extends WorldSavedData{
 		}
 	}
 	
-	public static CompoundNBT getRoad(String key) {
+	public static CompoundNBT getRoad(ChunkPos chunk) {
+		String key = chunk.toString();
 		if(!roadMap.contains(key)) return null;
 		CompoundNBT road = roadMap.getCompound(key);
 		roadMap.remove(key);
 		return road;
 	}
-	
-	//I don't think I need this, but I might, so I'm just commenting it out for now
-//	public void put(Point chunk, Point chunkto, BlockPos startpos) {}
 }

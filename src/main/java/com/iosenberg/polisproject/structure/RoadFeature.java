@@ -8,7 +8,9 @@ import com.mojang.serialization.Codec;
 
 import net.minecraft.block.Blocks;
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.BlockPos.Mutable;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.ISeedReader;
 import net.minecraft.world.gen.ChunkGenerator;
@@ -40,7 +42,7 @@ public class RoadFeature extends Feature<NoFeatureConfig>{
 		ChunkPos s; //i,j form of source and destination
 		ChunkPos d;
 		ChunkPos offset; //world location of (0,0)
-		if (source.x < destination.x) { //x == i; j == z;
+		if (source.x < destination.x) { //i == x; j == z;
 			if (source.z < destination.z) {
 				s = new ChunkPos(0, 0);
 				d = new ChunkPos(xMax - 1, zMax - 1);
@@ -155,29 +157,75 @@ public class RoadFeature extends Feature<NoFeatureConfig>{
 		}
 		
 		//Finished algorithm. The path is stored in previousChunk[]
-		ChunkPos chunk = previousChunk[d.x][d.z];
+		ChunkPos chunk = d;
 		while(!chunk.equals(s)) {
-			PPWorldSavedData.putRoad(chunk.x + offset.x, chunk.z + offset.z);
+			ChunkPos offsetChunk = new ChunkPos(chunk.x + offset.x, chunk.z + offset.z);
+			ChunkPos offsetPreviousChunk = new ChunkPos(previousChunk[chunk.x][chunk.z].x + offset.x, previousChunk[chunk.x][chunk.z].z + offset.z);
+			PPWorldSavedData.putRoad(offsetChunk, offsetPreviousChunk); //add road in both directions
+			PPWorldSavedData.putRoad(offsetPreviousChunk, offsetChunk);
 			System.out.println((chunk.x + offset.x) + "," + (chunk.z + offset.z) + " : " + distance[chunk.x][chunk.z]);
 			chunk = previousChunk[chunk.x][chunk.z];
 		}
-	}	
+		
+		//Remove any illegal chunks from the road
+		for(int i = 0; i < illegalChunks.length; i++) {
+			PPWorldSavedData.getRoad(illegalChunks[i]);
+		}
+	}
 
 	@Override
 	public boolean place(ISeedReader reader, ChunkGenerator generator, Random rand, BlockPos pos,
 			NoFeatureConfig config) {
-		String key = (pos.getX() >> 4) + "," + (pos.getZ() >> 4);
-		CompoundNBT roadNBT = PPWorldSavedData.getRoad(key);
+		CompoundNBT roadNBT = PPWorldSavedData.getRoad(new ChunkPos(pos.getX() >> 4, pos.getZ() >> 4));
 		if(roadNBT == null) return false;
-		System.out.println("uh yuhhhh");
-		BlockPos.Mutable blockpos$Mutable = new BlockPos.Mutable();//.setPos(new BlockPos(x,y,z));
-		for (int i=0;i<16;i++)
-			for (int j=0;j<16;j++) {
-				blockpos$Mutable.setX(pos.getX() + i);
-				blockpos$Mutable.setZ(pos.getZ() + j);
+		
+		System.out.println("uh yuhhhh: " + (pos.getX() >> 4) + "," + (pos.getZ() >> 4));
+		int centerX = pos.getX() + 7;
+		int centerZ = pos.getZ() + 7;
+		BlockPos.Mutable blockpos$Mutable = new BlockPos.Mutable();
+		blockpos$Mutable.setX(centerX);
+		blockpos$Mutable.setZ(centerZ);
+		blockpos$Mutable.setY(generator.getBaseHeight(blockpos$Mutable.getX(), blockpos$Mutable.getZ(), Heightmap.Type.WORLD_SURFACE));
+		reader.setBlock(blockpos$Mutable, Blocks.BLACK_WOOL.defaultBlockState(), 4);
+		
+		if(roadNBT.getBoolean("East")) {
+			for(int i = 0; i < 7; i++) {
+				blockpos$Mutable.move(Direction.EAST);
 				blockpos$Mutable.setY(generator.getBaseHeight(blockpos$Mutable.getX(), blockpos$Mutable.getZ(), Heightmap.Type.WORLD_SURFACE));
 				reader.setBlock(blockpos$Mutable, Blocks.BLACK_WOOL.defaultBlockState(), 4);
-			}	
+			}
+		}
+		if(roadNBT.getBoolean("West")) {
+			blockpos$Mutable.setX(centerX);
+			blockpos$Mutable.setZ(centerZ);
+			
+			for(int i = 0; i < 7; i++) {
+				blockpos$Mutable.move(Direction.WEST);
+				blockpos$Mutable.setY(generator.getBaseHeight(blockpos$Mutable.getX(), blockpos$Mutable.getZ(), Heightmap.Type.WORLD_SURFACE));
+				reader.setBlock(blockpos$Mutable, Blocks.BLACK_WOOL.defaultBlockState(), 4);
+			}
+		}
+		if(roadNBT.getBoolean("South")) {
+			blockpos$Mutable.setX(centerX);
+			blockpos$Mutable.setZ(centerZ);
+			
+			for(int i = 0; i < 7; i++) {
+				blockpos$Mutable.move(Direction.SOUTH);
+				blockpos$Mutable.setY(generator.getBaseHeight(blockpos$Mutable.getX(), blockpos$Mutable.getZ(), Heightmap.Type.WORLD_SURFACE));
+				reader.setBlock(blockpos$Mutable, Blocks.BLACK_WOOL.defaultBlockState(), 4);
+			}
+		}
+		if(roadNBT.getBoolean("North")) {
+			blockpos$Mutable.setX(centerX);
+			blockpos$Mutable.setZ(centerZ);
+			
+			for(int i = 0; i < 7; i++) {
+				blockpos$Mutable.move(Direction.NORTH);
+				blockpos$Mutable.setY(generator.getBaseHeight(blockpos$Mutable.getX(), blockpos$Mutable.getZ(), Heightmap.Type.WORLD_SURFACE));
+				reader.setBlock(blockpos$Mutable, Blocks.BLACK_WOOL.defaultBlockState(), 4);
+			}
+		}
+		
 		return true;
 	}
 

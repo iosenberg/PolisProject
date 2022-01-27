@@ -399,9 +399,17 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 		byte byteHeight = (byte)(heightModeIndex + Byte.MIN_VALUE);
 		byte biome = (byte)biomeModeIndex;
 		
+		//Illegal chunks, used for road generation
+		ArrayList<ChunkPos> illegalChunks = new ArrayList<ChunkPos>(121);
+		for(int i = -5; i < 6; i++) {
+			for(int j = -5; j < 6; j++) {
+				illegalChunks.add(new ChunkPos(chunkPos.x + i,chunkPos.z + j));
+			}
+		}
+		
 		PolisProject.LOGGER.log(Level.DEBUG,chunkPos.toString() + " to " + junctionChunktion.toString());
-		PPWorldSavedData.putCity(chunkX, chunkZ, byteHeight, biome, map, anchors);
-		RoadFeature.generateRoads(chunkPos, junctionChunktion, new ChunkPos[1], generator);
+		PPWorldSavedData.putCity(chunkPos, byteHeight, biome, map, anchors);
+		RoadFeature.generateRoads(chunkPos, junctionChunktion, illegalChunks.toArray(new ChunkPos[0]), generator);
 		System.out.println(junctionChunktion.toString());
 		if (biomeModeIndex == 12 /* desert */) return true; //TODO Take this out once there are more biome cities
 		return false;
@@ -424,7 +432,7 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 			int z = chunkZ << 4;
 			int y = generator.getBaseHeight(x, z, Heightmap.Type.WORLD_SURFACE_WG);
 			
-			CompoundNBT city = PPWorldSavedData.getCity(chunkX, chunkZ);
+			CompoundNBT city = PPWorldSavedData.getCity(new ChunkPos(chunkX, chunkZ));
 			int biome = city.getByte("biome");
 			
 			DebugCityManager.start(templateManagerIn, new BlockPos(x, y, z), city, this.pieces, random);
