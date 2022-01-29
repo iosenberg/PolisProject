@@ -111,4 +111,8 @@ public class PPWorldSavedData extends WorldSavedData{
 		roadMap.remove(key);
 		return road;
 	}
+	
+	public static boolean containsRoad(ChunkPos chunk) {
+		return(roadMap.contains(chunk.toString()));
+	}
 }

@@ -1,5 +1,7 @@
 package com.iosenberg.polisproject.structure;
 
+import java.awt.Point;
+import java.util.ArrayList;
 import java.util.PriorityQueue;
 import java.util.Random;
 
@@ -36,44 +38,31 @@ public class RoadFeature extends Feature<NoFeatureConfig>{
 		return new ChunkPos(x, z);
 	}
 	
-	public static void generateRoads(ChunkPos source, ChunkPos destination, ChunkPos[] illegalChunks, ChunkGenerator generator) {
-		final int xMax = Math.abs(source.x - destination.x);
-		final int zMax = Math.abs(source.z - destination.z);
-		ChunkPos s; //i,j form of source and destination
-		ChunkPos d;
-		ChunkPos offset; //world location of (0,0)
-		if (source.x < destination.x) { //i == x; j == z;
-			if (source.z < destination.z) {
-				s = new ChunkPos(0, 0);
-				d = new ChunkPos(xMax - 1, zMax - 1);
-				offset = source;
-			}
-			else {
-				s = new ChunkPos(0, zMax - 1);
-				d = new ChunkPos(xMax - 1, 0);
-				offset = new ChunkPos(source.x, destination.z);
-			}
-		}
-		else {
-			if (source.z < destination.z) {
-				s = new ChunkPos(xMax - 1, 0);
-				d = new ChunkPos(0, zMax - 1);
-				offset = new ChunkPos(destination.x, source.z);
-			}
-			else {
-				s = new ChunkPos(xMax - 1, zMax - 1);
-				d = new ChunkPos(0,0);
-				offset = destination;
-			}
-		}
-
-		byte[][] stDevMap = new byte[xMax][zMax];
-		int[][] meanMap = new int[xMax][zMax];
+	//Returns the input pos rounded down to the nearest JUNCTION_SPACEth
+	public static ChunkPos calculateOffset(ChunkPos pos) {
+		int x = (pos.x / JUNCTION_SPACE) * JUNCTION_SPACE;
+		int z = (pos.z / JUNCTION_SPACE) * JUNCTION_SPACE;
+		if (pos.x < 0) x -= JUNCTION_SPACE;
+		if (pos.z < 0) z -= JUNCTION_SPACE;
+		return new ChunkPos(x, z);
+	}
+	
+	/**
+	 * Returns the map of weights off which road generation is based.
+	 * If map doesn't exist, creates the map
+	 * It's a janky implementation. I'll clean it up another time.
+	 * 
+	 * @param cornerChunk - ChunkPos of the bottom left corner of the map
+	 * @param generator - a chunk generator
+	 * @return Point[][] map, where Point p.x is the standard deviation(ish) of a chunk, and p.y is the mean height
+	 */
+	public static Point[][] getWeightMap(ChunkPos cornerChunk, ChunkGenerator generator) {
+		Point[][] weightMap = new Point[JUNCTION_SPACE + 1][JUNCTION_SPACE + 1];
 		
-		for(int i = 0; i < xMax; i++) {
-			for(int j = 0; j < zMax; j++) {
-				int x = (offset.x + i) << 4;
-				int z = (offset.z + j) << 4;
+		for(int i = 0; i < weightMap.length; i++) {
+			for(int j = 0; j < weightMap[0].length; j++) {
+				int x = (cornerChunk.x + i) << 4;
+				int z = (cornerChunk.z + j) << 4;
 				int mean = 0;
 				int maxHeight = 0;
 				int minHeight = Integer.MAX_VALUE;
@@ -85,10 +74,65 @@ public class RoadFeature extends Feature<NoFeatureConfig>{
 						if(height < minHeight) minHeight = height;
 					}
 				}
-				stDevMap[i][j] = (byte)(maxHeight-minHeight);
-				meanMap[i][j] = mean/16;
+				weightMap[i][j] = new Point(maxHeight - minHeight, mean/16);
 			}
 		}
+		
+		return weightMap;
+	}
+	
+	public static ChunkPos[] generateDestinations(ChunkPos source, int max) {
+		//List of corners sorted by distance from source
+		ArrayList<ChunkPos> destinations = new ArrayList<ChunkPos>(4);
+		destinations.add(new ChunkPos(0,0));
+		destinations.add(new ChunkPos(0, 64));
+		destinations.add(new ChunkPos(64, 0));
+		destinations.add(new ChunkPos(64, 64));
+		destinations.sort((a, b) -> source.x - a.x + source.z - a.z + source.x - b.x + source.z - b.z);
+		
+		//Removes destinations from the list if they are too far away (by chessboard distance) or if the list is too big
+		while(destinations.size() > max || destinations.get(0).getChessboardDistance(source) > 75) {
+			destinations.remove(0);
+		}
+		
+		//Return destinations as array
+		return destinations.toArray(new ChunkPos[0]);
+	}
+	
+	public static void generateAllRoads(ChunkPos source, int maxDestinations, ChunkPos[] illegalChunks, ChunkGenerator generator) {
+		System.out.println("Hello!");
+		ChunkPos offset = calculateOffset(source);
+		ChunkPos offsetSource = new ChunkPos(source.x - offset.x, source.z - offset.z);
+		Point[][] weightMap = getWeightMap(offset, generator);
+		ChunkPos[] destinations = generateDestinations(offsetSource, maxDestinations);
+		
+		System.out.println("Source is " + source.toString() + " and offset source is " + offsetSource.toString());
+		
+		//Iterate through each destination, generate road
+		for(int i = 0; i < destinations.length; i++) {
+			ChunkPos[] road = generateRoad(offsetSource, destinations[i], weightMap, offset);
+			
+			//Add offset
+			for(int j = 0; j < road.length; j++) {
+				road[j] = new ChunkPos(road[j].x + offset.x, road[j].z + offset.z);
+			}
+			
+			//Add road chunk to roadMap in both directions
+			for(int j = 0; j < road.length - 1; j++) {
+				PPWorldSavedData.putRoad(road[j], road[j+1]);
+				PPWorldSavedData.putRoad(road[j+1], road[j]);
+			}
+		}
+		
+		//Remove any illegal chunks from the road
+		for(int i = 0; i < illegalChunks.length; i++) {
+			PPWorldSavedData.getRoad(illegalChunks[i]);
+		}
+	}
+	
+	public static ChunkPos[] generateRoad(ChunkPos s, ChunkPos d, Point[][] weightMap, ChunkPos offset) {
+		int xMax = weightMap.length;
+		int zMax = weightMap[0].length;
 		
 		//Run a variant of Dijkstra's algorithm
 		boolean[][] visited = new boolean[xMax][zMax];
@@ -112,7 +156,9 @@ public class RoadFeature extends Feature<NoFeatureConfig>{
 				int tx = pos.x - 1; //target x
 				int tz = pos.z; //target z
 				//"distance" is equal to the stDev of the target chunk + the difference in average height of the to chunks + distance of previous chunk + 1
-				int tempDist = stDevMap[tx][tz] + Math.abs(meanMap[tx][tz] - meanMap[pos.x][pos.z]) + distance[pos.x][pos.z] + 1;
+				int tempDist = weightMap[tx][tz].x + Math.abs(weightMap[tx][tz].y - weightMap[pos.x][pos.z].y) + distance[pos.x][pos.z] + 1;
+				//If there's already a road, the cost of building a road there is 0
+				if(PPWorldSavedData.containsRoad(new ChunkPos(tx + offset.x, tz + offset.z))) tempDist = distance[pos.x][pos.z];
 				if(tempDist < distance[tx][tz]) {
 					distance[tx][tz] = tempDist;
 					previousChunk[tx][tz] = pos;
@@ -123,7 +169,9 @@ public class RoadFeature extends Feature<NoFeatureConfig>{
 			if(pos.x < xMax - 1 && !visited[pos.x + 1][pos.z]) {
 				int tx = pos.x + 1; //target x
 				int tz = pos.z; //target z
-				int tempDist = stDevMap[tx][tz] + Math.abs(meanMap[tx][tz] - meanMap[pos.x][pos.z]) + distance[pos.x][pos.z] + 1;
+				int tempDist = weightMap[tx][tz].x + Math.abs(weightMap[tx][tz].y - weightMap[pos.x][pos.z].x) + distance[pos.x][pos.z] + 1;
+				//If there's already a road, the cost of building a road there is 0
+				if(PPWorldSavedData.containsRoad(new ChunkPos(tx + offset.x, tz + offset.z))) tempDist = distance[pos.x][pos.z];
 				if(tempDist < distance[tx][tz]) {
 					distance[tx][tz] = tempDist;
 					previousChunk[tx][tz] = pos;
@@ -134,7 +182,9 @@ public class RoadFeature extends Feature<NoFeatureConfig>{
 			if(pos.z > 0 && !visited[pos.x][pos.z - 1]) {
 				int tx = pos.x; //target x
 				int tz = pos.z - 1; //target z
-				int tempDist = stDevMap[tx][tz] + Math.abs(meanMap[tx][tz] - meanMap[pos.x][pos.z]) + distance[pos.x][pos.z] + 1;
+				int tempDist = weightMap[tx][tz].x + Math.abs(weightMap[tx][tz].y - weightMap[pos.x][pos.z].y) + distance[pos.x][pos.z] + 1;
+				//If there's already a road, the cost of building a road there is 0
+				if(PPWorldSavedData.containsRoad(new ChunkPos(tx + offset.x, tz + offset.z))) tempDist = distance[pos.x][pos.z];
 				if(tempDist < distance[tx][tz]) {
 					distance[tx][tz] = tempDist;
 					previousChunk[tx][tz] = pos;
@@ -145,7 +195,9 @@ public class RoadFeature extends Feature<NoFeatureConfig>{
 			if(pos.z < zMax - 1 && !visited[pos.x][pos.z + 1]) {
 				int tx = pos.x; //target x
 				int tz = pos.z + 1; //target z
-				int tempDist = stDevMap[tx][tz] + Math.abs(meanMap[tx][tz] - meanMap[pos.x][pos.z]) + distance[pos.x][pos.z] + 1;
+				int tempDist = weightMap[tx][tz].x + Math.abs(weightMap[tx][tz].y - weightMap[pos.x][pos.z].y) + distance[pos.x][pos.z] + 1;
+				//If there's already a road, the cost of building a road there is 0
+				if(PPWorldSavedData.containsRoad(new ChunkPos(tx + offset.x, tz + offset.z))) tempDist = distance[pos.x][pos.z];
 				if(tempDist < distance[tx][tz]) {
 					distance[tx][tz] = tempDist;
 					previousChunk[tx][tz] = pos;
@@ -156,22 +208,18 @@ public class RoadFeature extends Feature<NoFeatureConfig>{
 			
 		}
 		
-		//Finished algorithm. The path is stored in previousChunk[]
+		//Finished algorithm. The path is stored in previousChunk[], which will be read into an ArrayList path
+		ArrayList<ChunkPos> path = new ArrayList<ChunkPos>();
 		ChunkPos chunk = d;
 		while(!chunk.equals(s)) {
-			ChunkPos offsetChunk = new ChunkPos(chunk.x + offset.x, chunk.z + offset.z);
-			ChunkPos offsetPreviousChunk = new ChunkPos(previousChunk[chunk.x][chunk.z].x + offset.x, previousChunk[chunk.x][chunk.z].z + offset.z);
-			PPWorldSavedData.putRoad(offsetChunk, offsetPreviousChunk); //add road in both directions
-			PPWorldSavedData.putRoad(offsetPreviousChunk, offsetChunk);
-			System.out.println((chunk.x + offset.x) + "," + (chunk.z + offset.z) + " : " + distance[chunk.x][chunk.z]);
+			path.add(chunk);
 			chunk = previousChunk[chunk.x][chunk.z];
 		}
 		
-		//Remove any illegal chunks from the road
-		for(int i = 0; i < illegalChunks.length; i++) {
-			PPWorldSavedData.getRoad(illegalChunks[i]);
-		}
+		return path.toArray(new ChunkPos[0]);
 	}
+	
+	
 
 	@Override
 	public boolean place(ISeedReader reader, ChunkGenerator generator, Random rand, BlockPos pos,

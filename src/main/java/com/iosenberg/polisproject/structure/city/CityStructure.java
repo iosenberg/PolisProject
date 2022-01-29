@@ -409,7 +409,7 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 		
 		PolisProject.LOGGER.log(Level.DEBUG,chunkPos.toString() + " to " + junctionChunktion.toString());
 		PPWorldSavedData.putCity(chunkPos, byteHeight, biome, map, anchors);
-		RoadFeature.generateRoads(chunkPos, junctionChunktion, illegalChunks.toArray(new ChunkPos[0]), generator);
+		RoadFeature.generateAllRoads(chunkPos, 3, illegalChunks.toArray(new ChunkPos[0]), generator);
 		System.out.println(junctionChunktion.toString());
 		if (biomeModeIndex == 12 /* desert */) return true; //TODO Take this out once there are more biome cities
 		return false;
