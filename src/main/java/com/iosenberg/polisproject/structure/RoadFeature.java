@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.PriorityQueue;
 import java.util.Random;
 
+import org.apache.commons.lang3.RandomUtils;
+
 import com.iosenberg.polisproject.dimension.PPWorldSavedData;
 import com.mojang.serialization.Codec;
 
@@ -68,7 +70,7 @@ public class RoadFeature extends Feature<NoFeatureConfig>{
 				int minHeight = Integer.MAX_VALUE;
 				for(int k = x; k < x + 16; k += 4) {
 					for(int l = z; l < z + 16; l += 4) {
-						int height = generator.getBaseHeight(k, l, Heightmap.Type.WORLD_SURFACE);
+						int height = generator.getBaseHeight(k, l, Heightmap.Type.OCEAN_FLOOR);
 						mean += height;
 						if(height > maxHeight) maxHeight = height;
 						if(height < minHeight) minHeight = height;
@@ -158,7 +160,7 @@ public class RoadFeature extends Feature<NoFeatureConfig>{
 				//"distance" is equal to the stDev of the target chunk + the difference in average height of the to chunks + distance of previous chunk + 1
 				int tempDist = weightMap[tx][tz].x + Math.abs(weightMap[tx][tz].y - weightMap[pos.x][pos.z].y) + distance[pos.x][pos.z] + 1;
 				//If there's already a road, the cost of building a road there is 0
-				if(PPWorldSavedData.containsRoad(new ChunkPos(tx + offset.x, tz + offset.z))) tempDist = distance[pos.x][pos.z];
+				if (PPWorldSavedData.containsRoad(new ChunkPos(tx + offset.x, tz + offset.z))) tempDist = distance[pos.x][pos.z];
 				if(tempDist < distance[tx][tz]) {
 					distance[tx][tz] = tempDist;
 					previousChunk[tx][tz] = pos;
@@ -171,7 +173,7 @@ public class RoadFeature extends Feature<NoFeatureConfig>{
 				int tz = pos.z; //target z
 				int tempDist = weightMap[tx][tz].x + Math.abs(weightMap[tx][tz].y - weightMap[pos.x][pos.z].x) + distance[pos.x][pos.z] + 1;
 				//If there's already a road, the cost of building a road there is 0
-				if(PPWorldSavedData.containsRoad(new ChunkPos(tx + offset.x, tz + offset.z))) tempDist = distance[pos.x][pos.z];
+				if (PPWorldSavedData.containsRoad(new ChunkPos(tx + offset.x, tz + offset.z))) tempDist = distance[pos.x][pos.z];
 				if(tempDist < distance[tx][tz]) {
 					distance[tx][tz] = tempDist;
 					previousChunk[tx][tz] = pos;
@@ -184,7 +186,7 @@ public class RoadFeature extends Feature<NoFeatureConfig>{
 				int tz = pos.z - 1; //target z
 				int tempDist = weightMap[tx][tz].x + Math.abs(weightMap[tx][tz].y - weightMap[pos.x][pos.z].y) + distance[pos.x][pos.z] + 1;
 				//If there's already a road, the cost of building a road there is 0
-				if(PPWorldSavedData.containsRoad(new ChunkPos(tx + offset.x, tz + offset.z))) tempDist = distance[pos.x][pos.z];
+				if (PPWorldSavedData.containsRoad(new ChunkPos(tx + offset.x, tz + offset.z))) tempDist = distance[pos.x][pos.z];
 				if(tempDist < distance[tx][tz]) {
 					distance[tx][tz] = tempDist;
 					previousChunk[tx][tz] = pos;
@@ -197,7 +199,7 @@ public class RoadFeature extends Feature<NoFeatureConfig>{
 				int tz = pos.z + 1; //target z
 				int tempDist = weightMap[tx][tz].x + Math.abs(weightMap[tx][tz].y - weightMap[pos.x][pos.z].y) + distance[pos.x][pos.z] + 1;
 				//If there's already a road, the cost of building a road there is 0
-				if(PPWorldSavedData.containsRoad(new ChunkPos(tx + offset.x, tz + offset.z))) tempDist = distance[pos.x][pos.z];
+				if (PPWorldSavedData.containsRoad(new ChunkPos(tx + offset.x, tz + offset.z))) tempDist = distance[pos.x][pos.z];
 				if(tempDist < distance[tx][tz]) {
 					distance[tx][tz] = tempDist;
 					previousChunk[tx][tz] = pos;
@@ -219,62 +221,176 @@ public class RoadFeature extends Feature<NoFeatureConfig>{
 		return path.toArray(new ChunkPos[0]);
 	}
 	
+	public static ChunkPos[] testRoadGeneration(ChunkPos s, ChunkPos d) {
+		ArrayList<ChunkPos> path = new ArrayList<ChunkPos>();
+		int x = s.x;
+		int z = s.z;
+		
+		path.add(s);
+		
+		while(x != d.x && z != d.z) {
+			if(x < d.x) x++;
+			else x--;
+			if(z < d.z) z++;
+			else z--;
+			
+			path.add(new ChunkPos(x,z));
+		}
+		while(x < d.x) {
+			x++;
+			path.add(new ChunkPos(x,z));
+		}
+		while(x > d.x) {
+			x--;
+			path.add(new ChunkPos(x,z));
+		}
+		while(z < d.z) {
+			z++;
+			path.add(new ChunkPos(x,z));
+		}
+		while(z > d.z) {
+			z--;
+			path.add(new ChunkPos(x,z));
+		}
+		
+		path.add(d);
+		
+		return path.toArray(new ChunkPos[0]);
+	}
+	
 	
 
 	@Override
 	public boolean place(ISeedReader reader, ChunkGenerator generator, Random rand, BlockPos pos,
 			NoFeatureConfig config) {
-		CompoundNBT roadNBT = PPWorldSavedData.getRoad(new ChunkPos(pos.getX() >> 4, pos.getZ() >> 4));
+		
+		ChunkPos chunk = new ChunkPos(pos.getX() >> 4, pos.getZ() >> 4);
+		
+		CompoundNBT roadNBT = PPWorldSavedData.getRoad(chunk);
 		if(roadNBT == null) return false;
+		boolean east = roadNBT.getBoolean("East");
+		boolean west = roadNBT.getBoolean("West");
+		boolean south = roadNBT.getBoolean("South");
+		boolean north = roadNBT.getBoolean("North");
+	
+		Point[][] weightMap = new Point[16][16];
+		int mean = 0;
 		
-		System.out.println("uh yuhhhh: " + (pos.getX() >> 4) + "," + (pos.getZ() >> 4));
-		int centerX = pos.getX() + 7;
-		int centerZ = pos.getZ() + 7;
-		BlockPos.Mutable blockpos$Mutable = new BlockPos.Mutable();
-		blockpos$Mutable.setX(centerX);
-		blockpos$Mutable.setZ(centerZ);
-		blockpos$Mutable.setY(generator.getBaseHeight(blockpos$Mutable.getX(), blockpos$Mutable.getZ(), Heightmap.Type.WORLD_SURFACE));
-		reader.setBlock(blockpos$Mutable, Blocks.BLACK_WOOL.defaultBlockState(), 4);
+		for(int i = 0; i < 16; i++) {
+			for(int j = 0; j < 16; j++) {
+				int height = generator.getBaseHeight(pos.getX() + i, pos.getZ() + j, Heightmap.Type.WORLD_SURFACE);
+				weightMap[i][j] = new Point(0, height);
+				mean += height;
+			}
+		}
 		
-		if(roadNBT.getBoolean("East")) {
-			for(int i = 0; i < 7; i++) {
-				blockpos$Mutable.move(Direction.EAST);
-				blockpos$Mutable.setY(generator.getBaseHeight(blockpos$Mutable.getX(), blockpos$Mutable.getZ(), Heightmap.Type.WORLD_SURFACE));
-				reader.setBlock(blockpos$Mutable, Blocks.BLACK_WOOL.defaultBlockState(), 4);
+		mean /= (16 * 16);
+		
+		for(int i = 0; i < 16; i++) {
+			for(int j = 0; j < 16; j++) {
+				weightMap[i][j].x = Math.abs(weightMap[i][j].y - mean);
 			}
 		}
-		if(roadNBT.getBoolean("West")) {
-			blockpos$Mutable.setX(centerX);
-			blockpos$Mutable.setZ(centerZ);
+		
+		ArrayList<ChunkPos> startList = new ArrayList<ChunkPos>(4);
+		//Add East side, if necessary
+		if(east) {
+			if(roadNBT.contains("EastStart")) {
+				BlockPos tempPos = BlockPos.of(roadNBT.getLong("EastStart"));
+				startList.add(new ChunkPos(tempPos.getX(), tempPos.getZ()));
+			}
+			else {
+				int lowestIndex = 7;
+				for(int i = 0; i < 16; i++) {
+					if(weightMap[15][i].x < weightMap[15][i].x) lowestIndex = i;
+				}
+				startList.add(new ChunkPos(15, lowestIndex));
+			}
+		}
+		//Add West
+		if(west) {
+			if(roadNBT.contains("WestStart")) {
+				BlockPos tempPos = BlockPos.of(roadNBT.getLong("WestStart"));
+				startList.add(new ChunkPos(tempPos.getX(), tempPos.getZ()));
+			}
+			else {
+				int lowestIndex = 7;
+				for(int i = 0; i < 16; i++) {
+					if(weightMap[0][i].x < weightMap[0][i].x) lowestIndex = i;
+				}
+				startList.add(new ChunkPos(0, lowestIndex));
+			}
+		}
+		//Add South
+		if(south) {
+			if(roadNBT.contains("SouthStart")) {
+				BlockPos tempPos = BlockPos.of(roadNBT.getLong("SouthStart"));
+				startList.add(new ChunkPos(tempPos.getX(), tempPos.getZ()));
+			}
+			else {
+				int lowestIndex = 7;
+				for(int i = 0; i < 16; i++) {
+					if(weightMap[i][15].x < weightMap[lowestIndex][15].x) lowestIndex = i;
+				}
+				startList.add(new ChunkPos(lowestIndex, 15));
+			}
+		}
+		//Add North
+		if(north) {
+			if(roadNBT.contains("NorthStart")) {
+				BlockPos tempPos = BlockPos.of(roadNBT.getLong("NorthStart"));
+				startList.add(new ChunkPos(tempPos.getX(), tempPos.getZ()));
+			}
+			else {
+				int lowestIndex = 7;
+				for(int i = 0; i < 16; i++) {
+					if(weightMap[i][0].x < weightMap[lowestIndex][0].x) lowestIndex = i;
+				}
+				startList.add(new ChunkPos(lowestIndex, 0));
+			}
+		}
+		
+		//Randomize order
+		startList.sort((a, b) -> RandomUtils.nextInt(0, 2) -1);
+		
+		//Final map of roads
+		int[][] roadMap = new int[16][16];
+		
+		//For each road after the first, generate a road to the first. Then add to boolean map
+		for(int i = 1; i < startList.size(); i++) {
+//			ChunkPos[] path = generateRoad(startList.get(0), startList.get(i), weightMap, new ChunkPos(0,0), false);
+			ChunkPos[] path = testRoadGeneration(startList.get(0), startList.get(i));
+			for(ChunkPos pathChunk : path) {
+				for(int k = -1; k < 2; k++) {
+					for(int l = -1; l < 2; l++) {
+						int pathX = pathChunk.x + k;
+						int pathZ = pathChunk.z + l;
+						if(pathX > -1 && pathX < 16 && pathZ > -1 && pathZ < 16) {
+							roadMap[pathX][pathZ] = Math.max(roadMap[pathX][pathZ], weightMap[pathChunk.x][pathChunk.z].y);
+						}
+					}
+				}
+				weightMap[pathChunk.x][pathChunk.z].y = 1;
+			}
+		}
 			
-			for(int i = 0; i < 7; i++) {
-				blockpos$Mutable.move(Direction.WEST);
-				blockpos$Mutable.setY(generator.getBaseHeight(blockpos$Mutable.getX(), blockpos$Mutable.getZ(), Heightmap.Type.WORLD_SURFACE));
-				reader.setBlock(blockpos$Mutable, Blocks.BLACK_WOOL.defaultBlockState(), 4);
+		for(int i = 0; i < 16; i++) {
+			for(int j = 0; j < 16; j++) {
+				if(roadMap[i][j] != 0) {
+					int x = pos.getX() + i;
+					int z = pos.getZ() + j;
+					int y = roadMap[i][j] - 1;
+					reader.setBlock(new BlockPos(x, y, z), Blocks.STONE_BRICKS.defaultBlockState(), 4);
+					while(y < weightMap[i][j].y) {
+						y++;
+						reader.setBlock(new BlockPos(x, y, z), Blocks.AIR.defaultBlockState(), 4);
+					}
+				}
 			}
 		}
-		if(roadNBT.getBoolean("South")) {
-			blockpos$Mutable.setX(centerX);
-			blockpos$Mutable.setZ(centerZ);
-			
-			for(int i = 0; i < 7; i++) {
-				blockpos$Mutable.move(Direction.SOUTH);
-				blockpos$Mutable.setY(generator.getBaseHeight(blockpos$Mutable.getX(), blockpos$Mutable.getZ(), Heightmap.Type.WORLD_SURFACE));
-				reader.setBlock(blockpos$Mutable, Blocks.BLACK_WOOL.defaultBlockState(), 4);
-			}
-		}
-		if(roadNBT.getBoolean("North")) {
-			blockpos$Mutable.setX(centerX);
-			blockpos$Mutable.setZ(centerZ);
-			
-			for(int i = 0; i < 7; i++) {
-				blockpos$Mutable.move(Direction.NORTH);
-				blockpos$Mutable.setY(generator.getBaseHeight(blockpos$Mutable.getX(), blockpos$Mutable.getZ(), Heightmap.Type.WORLD_SURFACE));
-				reader.setBlock(blockpos$Mutable, Blocks.BLACK_WOOL.defaultBlockState(), 4);
-			}
-		}
+		
+		PPWorldSavedData.updateRoadStarts(chunk, startList.toArray(new ChunkPos[0]));
 		
 		return true;
 	}
-
 }

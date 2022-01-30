@@ -3,6 +3,7 @@ package com.iosenberg.polisproject.dimension;
 import com.iosenberg.polisproject.PolisProject;
 
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
@@ -114,5 +115,65 @@ public class PPWorldSavedData extends WorldSavedData{
 	
 	public static boolean containsRoad(ChunkPos chunk) {
 		return(roadMap.contains(chunk.toString()));
+	}
+	
+	public static void updateRoadStarts(ChunkPos chunk, ChunkPos[] startList) {
+		for(ChunkPos start : startList) {
+			//East
+			if(start.x == 15) {
+				ChunkPos targetChunk = new ChunkPos(chunk.x + 1, chunk.z) ;
+				if(roadMap.contains(targetChunk.toString())) {
+					CompoundNBT targetNBT = roadMap.getCompound(targetChunk.toString());
+					if(targetNBT.contains("WestStart")) {
+						targetNBT.remove("WestStart");
+					}
+					else {
+						targetNBT.putLong("WestStart", new BlockPos(0, 0, start.z).asLong());
+					}
+				}
+			}
+
+			//East
+			if(start.x == 15) {
+				ChunkPos targetChunk = new ChunkPos(chunk.x + 1, chunk.z) ;
+				if(roadMap.contains(targetChunk.toString())) {
+					CompoundNBT targetNBT = roadMap.getCompound(targetChunk.toString());
+					if(targetNBT.contains("EastStart")) {
+						targetNBT.remove("EastStart");
+					}
+					else {
+						targetNBT.putLong("EastStart", new BlockPos(15, 0, start.z).asLong());
+					}
+				}
+			}
+			
+			//South
+			if(start.z == 15) {
+				ChunkPos targetChunk = new ChunkPos(chunk.x, chunk.z + 1) ;
+				if(roadMap.contains(targetChunk.toString())) {
+					CompoundNBT targetNBT = roadMap.getCompound(targetChunk.toString());
+					if(targetNBT.contains("NorthStart")) {
+						targetNBT.remove("NorthStart");
+					}
+					else {
+						targetNBT.putLong("NorthStart", new BlockPos(start.x, 0, 0).asLong());
+					}
+				}
+			}
+			
+			//North
+			if(start.z == 0) {
+				ChunkPos targetChunk = new ChunkPos(chunk.x, chunk.z - 1) ;
+				if(roadMap.contains(targetChunk.toString())) {
+					CompoundNBT targetNBT = roadMap.getCompound(targetChunk.toString());
+					if(targetNBT.contains("SouthStart")) {
+						targetNBT.remove("SouthStart");
+					}
+					else {
+						targetNBT.putLong("SouthStart", new BlockPos(start.x, 0, 15).asLong());
+					}
+				}
+			}
+		}
 	}
 }
