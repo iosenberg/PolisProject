@@ -6,23 +6,16 @@ import java.util.List;
 import java.util.Random;
 
 import com.iosenberg.polisproject.PolisProject;
-import com.iosenberg.polisproject.dimension.PPWorldSavedData;
 import com.iosenberg.polisproject.init.PPStructures;
-import com.iosenberg.polisproject.structure.RoadJunctionStructurePiece;
-import com.iosenberg.polisproject.structure.city.AbstractCityManager.Piece;
 
-import net.minecraft.block.Blocks;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.Mirror;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.Rotation;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.MutableBoundingBox;
-import net.minecraft.world.ISeedReader;
 import net.minecraft.world.IServerWorld;
 import net.minecraft.world.gen.ChunkGenerator;
-import net.minecraft.world.gen.feature.structure.StructureManager;
 import net.minecraft.world.gen.feature.structure.StructurePiece;
 import net.minecraft.world.gen.feature.structure.TemplateStructurePiece;
 import net.minecraft.world.gen.feature.template.PlacementSettings;

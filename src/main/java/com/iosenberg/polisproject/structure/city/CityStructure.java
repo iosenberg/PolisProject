@@ -10,13 +10,10 @@ import org.apache.logging.log4j.Level;
 import com.google.common.collect.ImmutableMap;
 import com.iosenberg.polisproject.PolisProject;
 import com.iosenberg.polisproject.dimension.PPWorldSavedData;
-import com.iosenberg.polisproject.init.PPStructures;
 import com.iosenberg.polisproject.structure.RoadFeature;
-import com.iosenberg.polisproject.structure.city.AbstractCityManager.Piece;
 import com.mojang.serialization.Codec;
 
 import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.util.Rotation;
 import net.minecraft.util.SharedSeedRandom;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
@@ -31,7 +28,6 @@ import net.minecraft.world.gen.feature.NoFeatureConfig;
 import net.minecraft.world.gen.feature.structure.Structure;
 import net.minecraft.world.gen.feature.structure.StructureStart;
 import net.minecraft.world.gen.feature.template.TemplateManager;
-import net.minecraft.world.storage.WorldSavedData;
 
 public class CityStructure extends Structure<NoFeatureConfig>{
 	
@@ -247,104 +243,86 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 				if(islandSizeList.get(i) > islandSizeList.get(maxSizeIndex))
 						maxSizeIndex = i;
 		
+		int citySize = islandSizeList.get(maxSizeIndex);
+		
 		//If island is not large enough, returns false: no city
-		if(islandSizeList.get(maxSizeIndex) < 1100) return false;
+		if(citySize < 1000) return false;
 		
 		//Sets all cells not in the island to true;
 		for(int i = 0; i < 44; i++)
 			for(int j = 0; j < 44; j++)
 				if(!smallCityMap[i][j] && islandMap[i][j] != maxSizeIndex)
 					smallCityMap[i][j] = true;
+		
+		//Now finds the locations of anchors in the city
 
+		//Splits the city into a number of districts based on size of the city;
+		int districtNumber = 3;
+		if(citySize > 1200) districtNumber++;
+		if(citySize > 1500) districtNumber++;
 		
-		//Generate places of interest? by splitting city into smaller polygons
-		//This is messy. Need to find a better way to calculate a centroid-esque location
-		//Find centroid:
-		int lowesti = -1;
-		int highesti = -1;
-		int lowestj = -1;
-		int highestj = -1;
-		for(int i=0;i<44;i++) {
-			for(int j=0;j<44;j++) {
-				if(!smallCityMap[i][j]) {
-					lowesti = i;
-					break;
-				}
-			}
-			if(lowesti != -1) break;
-		}
-		for(int i=43;i>=0;i--) {
-			for(int j=0;j<44;j++) {
-				if(!smallCityMap[i][j]) {
-					highesti = i;
-					break;
-				}
-			}
-			if(highesti != -1) break;
-		}
-		for(int j=0;j<44;j++) {
-			for(int i=0;i<44;i++) {
-				if(!smallCityMap[i][j]) {
-					lowestj = j;
-					break;
-				}
-			}
-			if(lowestj != -1) break;
-		}
-		for(int j=43;j>=0;j--) {
-			for(int i=0;i<44;i++) {
-				if(!smallCityMap[i][j]) {
-					highestj = j;
-					break;
-				}
-			}
-			if(highestj != -1) break;
+		ArrayList<ArrayList<ChunkPos>> districtList = new ArrayList<ArrayList<ChunkPos>>(districtNumber);
+		ArrayList<ChunkPos> centroids = new ArrayList<ChunkPos>(districtNumber);
+		for(int i = 0; i < districtNumber; i++) {
+			districtList.add(new ArrayList<ChunkPos>());
+			centroids.add(new ChunkPos(0,0));
 		}
 		
+		ArrayList<ChunkPos> cityChunks = new ArrayList<ChunkPos>();
+		for(int i = 0; i < 44; i++) {
+			for(int j = 0; j < 44; j++) {
+				if(!smallCityMap[i][j]) cityChunks.add(new ChunkPos(i,j));
+			}
+		}
 		
-		Point centroid = new Point((highesti + lowesti)/2,(highestj + lowestj)/2);
-		
-		//Gonna try point of inaccessibility instead of centroid
-		//TODO Find a better system than an array of ArrayLists
-		ArrayList[] districtList = {
-				new ArrayList<Point>(), //LILJ
-				new ArrayList<Point>(), //LIHJ
-				new ArrayList<Point>(), //HILJ
-				new ArrayList<Point>()  //HIHJ
-		};
-		
-		for(int i=0;i<44;i++) {
-			for(int j=0;j<44;j++) {
-				if(!smallCityMap[i][j]) {
-					if(i<centroid.x) { //LI
-						if(j<centroid.y) { //LILJ
-							districtList[0].add(new Point(i,j));
-						}	
-						else { //LIHJ
-							districtList[1].add(new Point(i,j));
-						}
-					}
-					else { //HI
-						if(j<centroid.y) { //HILJ
-							districtList[2].add(new Point(i,j));
-						}
-						else { //HIHJ
-							districtList[3].add(new Point(i,j));
-						}
+		//Creates districts by k-means algorithm
+		boolean changed = true;
+		while(changed) {
+			System.out.println("sneep");
+			changed = false;
+			for(int i = 0; i < districtNumber; i++) {
+				districtList.set(i, new ArrayList<ChunkPos>());
+			}
+			
+			for(ChunkPos chunk : cityChunks) {
+				int lowest = 0;
+				for(int j = 0; j < centroids.size(); j++) {
+					if(centroids.get(j).getChessboardDistance(chunk) < centroids.get(lowest).getChessboardDistance(chunk)) lowest = j;
+				}
+				districtList.get(lowest).add(chunk);
+			}
+			
+			for(int i = 0; i < districtList.size(); i++) {
+				int centroidX = 0;
+				int centroidZ = 0;
+				int totalChunks = 0;
+				
+				for(ChunkPos chunk : districtList.get(i)) {
+					centroidX += chunk.x;
+					centroidZ += chunk.z;
+					totalChunks++;
+				}
+				
+				if(totalChunks > 0) {
+					ChunkPos newCentroid = new ChunkPos(centroidX/totalChunks, centroidZ/totalChunks);
+					if(!newCentroid.equals(centroids.get(i))) {
+						changed = true;
+						centroids.set(i, newCentroid);
 					}
 				}
 			}
 		}
 		
+		//Calculate Point of Inaccessibility for each district, store in anchors[]
 		int[] minDists = {Integer.MAX_VALUE,Integer.MAX_VALUE,Integer.MAX_VALUE,Integer.MAX_VALUE};
-		Point[] PoI = new Point[4]; //Points of Inaccessibility / Places of Interest
-		for(int i=0; i < 4; i++) {
-			ArrayList<Point> list = districtList[i];
+		ChunkPos[] PoI = new ChunkPos[districtNumber]; //Points of Inaccessibility / Places of Interest
+		for(int i = 0; i < districtNumber; i++) {
+			ArrayList<ChunkPos> list = districtList.get(i);
 			for(int j = 0; j < list.size(); j++) {
 				int dist = 0;
-				for(int k = 0; k < districtList[i].size(); k++) {
+				for(int k = 0; k < list.size(); k++) {
 					//Add distance from j to k to dist
-					dist += Math.abs(list.get(j).x - list.get(k).x) + Math.abs(list.get(j).y - list.get(k).y);
+					dist += Math.abs(list.get(j).x - list.get(k).x) + Math.abs(list.get(j).z - list.get(k).z);
 				}
 				if(dist < minDists[i]) {
 					minDists[i] = dist;
@@ -353,30 +331,7 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 			}
 		}
 		
-		
-//		//All this is just a complex print statment
-//		byte[][] printmap = new byte[44][44];
-//		for(int i = 0;i<44;i++) {
-//			for(int j = 0;j<44;j++) {
-//				printmap[i][j] = (byte) (smallCityMap[i][j] ? 0 : 1);
-//			}
-//		}
-//		
-//		for(int i = 0; i < 4;i++) {
-//			for(int j = 0; j < districtList[i].size(); j++) {
-//				printmap[((Point)districtList[i].get(j)).x][((Point)districtList[i].get(j)).y] = (byte)(i+1);
-//			}
-//			printmap[PoI[i].x][PoI[i].y] = 8; 
-//		}
-//		
-//		for(int i = 0;i<44;i++) {
-//			for(int j=0;j<44;j++) {
-//				System.out.print(printmap[i][j] == 0 ? "." : printmap[i][j]);
-//			}
-//			System.out.println();
-//		}
-//		//End print statement
-		
+		//Finished Generation!		
 		
 		//Rewrites the smaller map into a map of appropriate size
 		cityMap = new boolean[176][176];
@@ -389,12 +344,10 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 		for(int i = 0;i < 44*44; i++) {
 			map[i] = (byte)(smallCityMap[i/44][i%44] ? 0 : 1);
 		}
-		long[] anchors = {
-				BlockPos.asLong(PoI[0].x*4 + x - 80, heightModeIndex, PoI[0].y*4 + z - 80),
-				BlockPos.asLong(PoI[1].x*4 + x - 80, heightModeIndex, PoI[1].y*4 + z - 80),
-				BlockPos.asLong(PoI[2].x*4 + x - 80, heightModeIndex, PoI[2].y*4 + z - 80),
-				BlockPos.asLong(PoI[3].x*4 + x - 80, heightModeIndex, PoI[3].y*4 + z - 80)
-		};
+		long[] anchors = new long[districtNumber];
+		for(int i = 0; i < districtNumber; i++) {
+				anchors[i] = BlockPos.asLong(PoI[i].x*4 + x - 80, heightModeIndex, PoI[i].z*4 + z - 80);
+			}
 		
 		byte byteHeight = (byte)(heightModeIndex + Byte.MIN_VALUE);
 		byte biome = (byte)biomeModeIndex;
@@ -407,6 +360,7 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 			}
 		}
 		
+		//Writes data into WorldSavedData, generates roads
 		PolisProject.LOGGER.log(Level.DEBUG,chunkPos.toString() + " to " + junctionChunktion.toString());
 		PPWorldSavedData.putCity(chunkPos, byteHeight, biome, map, anchors);
 		RoadFeature.generateAllRoads(chunkPos, 3, illegalChunks.toArray(new ChunkPos[0]), generator);
@@ -433,7 +387,7 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 			int y = generator.getBaseHeight(x, z, Heightmap.Type.WORLD_SURFACE_WG);
 			
 			CompoundNBT city = PPWorldSavedData.getCity(new ChunkPos(chunkX, chunkZ));
-			int biome = city.getByte("biome");
+//			int biome = city.getByte("biome");
 			
 			DebugCityManager.start(templateManagerIn, new BlockPos(x, y, z), city, this.pieces, random);
 			

@@ -12,9 +12,7 @@ import com.mojang.serialization.Codec;
 
 import net.minecraft.block.Blocks;
 import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockPos.Mutable;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.ISeedReader;
 import net.minecraft.world.gen.ChunkGenerator;
@@ -112,7 +110,7 @@ public class RoadFeature extends Feature<NoFeatureConfig>{
 		
 		//Iterate through each destination, generate road
 		for(int i = 0; i < destinations.length; i++) {
-			ChunkPos[] road = generateRoad(offsetSource, destinations[i], weightMap, offset);
+			ChunkPos[] road = generateRoadChunks(offsetSource, destinations[i], weightMap, offset);
 			
 			//Add offset
 			for(int j = 0; j < road.length; j++) {
@@ -132,7 +130,7 @@ public class RoadFeature extends Feature<NoFeatureConfig>{
 		}
 	}
 	
-	public static ChunkPos[] generateRoad(ChunkPos s, ChunkPos d, Point[][] weightMap, ChunkPos offset) {
+	public static ChunkPos[] generateRoadChunks(ChunkPos s, ChunkPos d, Point[][] weightMap, ChunkPos offset) {
 		int xMax = weightMap.length;
 		int zMax = weightMap[0].length;
 		
@@ -220,8 +218,15 @@ public class RoadFeature extends Feature<NoFeatureConfig>{
 		
 		return path.toArray(new ChunkPos[0]);
 	}
-	
-	public static ChunkPos[] testRoadGeneration(ChunkPos s, ChunkPos d) {
+
+	/**
+	 * Very simple road generation, connects s to d in a semi-straight line
+	 * 
+	 * @param s - Road source block
+	 * @param d - Road destination block
+	 * @return Array of ChunkPos's representing BlockPos's of the path of the road
+	 */
+	public static ChunkPos[] generateRoadBlocks(ChunkPos s, ChunkPos d) {
 		ArrayList<ChunkPos> path = new ArrayList<ChunkPos>();
 		int x = s.x;
 		int z = s.z;
@@ -264,8 +269,10 @@ public class RoadFeature extends Feature<NoFeatureConfig>{
 	public boolean place(ISeedReader reader, ChunkGenerator generator, Random rand, BlockPos pos,
 			NoFeatureConfig config) {
 		
+		//Gets chunk
 		ChunkPos chunk = new ChunkPos(pos.getX() >> 4, pos.getZ() >> 4);
 		
+		//Loads roadNBT from chunk. Return false and don't generate road if chunk is not in PPWorldSavedData.RoadMap
 		CompoundNBT roadNBT = PPWorldSavedData.getRoad(chunk);
 		if(roadNBT == null) return false;
 		boolean east = roadNBT.getBoolean("East");
@@ -273,9 +280,11 @@ public class RoadFeature extends Feature<NoFeatureConfig>{
 		boolean south = roadNBT.getBoolean("South");
 		boolean north = roadNBT.getBoolean("North");
 	
+		//Build weight map, 
 		Point[][] weightMap = new Point[16][16];
-		int mean = 0;
 		
+		//Calculate height, stored in weightMap.y, and calculates average height
+		int mean = 0;	
 		for(int i = 0; i < 16; i++) {
 			for(int j = 0; j < 16; j++) {
 				int height = generator.getBaseHeight(pos.getX() + i, pos.getZ() + j, Heightmap.Type.WORLD_SURFACE);
@@ -286,14 +295,16 @@ public class RoadFeature extends Feature<NoFeatureConfig>{
 		
 		mean /= (16 * 16);
 		
+		//Stores difference between height and average height in weightMap.x
 		for(int i = 0; i < 16; i++) {
 			for(int j = 0; j < 16; j++) {
 				weightMap[i][j].x = Math.abs(weightMap[i][j].y - mean);
 			}
 		}
 		
+		//Add sides of road to generate:
 		ArrayList<ChunkPos> startList = new ArrayList<ChunkPos>(4);
-		//Add East side, if necessary
+		//Add East
 		if(east) {
 			if(roadNBT.contains("EastStart")) {
 				BlockPos tempPos = BlockPos.of(roadNBT.getLong("EastStart"));
@@ -356,16 +367,16 @@ public class RoadFeature extends Feature<NoFeatureConfig>{
 		//Final map of roads
 		int[][] roadMap = new int[16][16];
 		
-		//For each road after the first, generate a road to the first. Then add to boolean map
+		//For each road after the first, generate a road to the first. Then add road path to roadMap
 		for(int i = 1; i < startList.size(); i++) {
-//			ChunkPos[] path = generateRoad(startList.get(0), startList.get(i), weightMap, new ChunkPos(0,0), false);
-			ChunkPos[] path = testRoadGeneration(startList.get(0), startList.get(i));
+			ChunkPos[] path = generateRoadBlocks(startList.get(0), startList.get(i));
 			for(ChunkPos pathChunk : path) {
 				for(int k = -1; k < 2; k++) {
 					for(int l = -1; l < 2; l++) {
 						int pathX = pathChunk.x + k;
 						int pathZ = pathChunk.z + l;
 						if(pathX > -1 && pathX < 16 && pathZ > -1 && pathZ < 16) {
+							//Adds each adjacent block to path block to roadMap, updates to be greatest adjacent height.
 							roadMap[pathX][pathZ] = Math.max(roadMap[pathX][pathZ], weightMap[pathChunk.x][pathChunk.z].y);
 						}
 					}
@@ -374,6 +385,7 @@ public class RoadFeature extends Feature<NoFeatureConfig>{
 			}
 		}
 			
+		//Generate all road blocks
 		for(int i = 0; i < 16; i++) {
 			for(int j = 0; j < 16; j++) {
 				if(roadMap[i][j] != 0) {
@@ -389,6 +401,7 @@ public class RoadFeature extends Feature<NoFeatureConfig>{
 			}
 		}
 		
+		//Add connecting blocks to adjacent road chunks
 		PPWorldSavedData.updateRoadStarts(chunk, startList.toArray(new ChunkPos[0]));
 		
 		return true;
