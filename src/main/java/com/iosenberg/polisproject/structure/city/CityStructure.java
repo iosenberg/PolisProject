@@ -261,13 +261,6 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 		if(citySize > 1200) districtNumber++;
 		if(citySize > 1500) districtNumber++;
 		
-		ArrayList<ArrayList<ChunkPos>> districtList = new ArrayList<ArrayList<ChunkPos>>(districtNumber);
-		ArrayList<ChunkPos> centroids = new ArrayList<ChunkPos>(districtNumber);
-		for(int i = 0; i < districtNumber; i++) {
-			districtList.add(new ArrayList<ChunkPos>());
-			centroids.add(new ChunkPos(0,0));
-		}
-		
 		ArrayList<ChunkPos> cityChunks = new ArrayList<ChunkPos>();
 		for(int i = 0; i < 44; i++) {
 			for(int j = 0; j < 44; j++) {
@@ -275,10 +268,16 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 			}
 		}
 		
+		ArrayList<ArrayList<ChunkPos>> districtList = new ArrayList<ArrayList<ChunkPos>>(districtNumber);
+		ArrayList<ChunkPos> centroids = new ArrayList<ChunkPos>(districtNumber);
+		for(int i = 0; i < districtNumber; i++) {
+			districtList.add(new ArrayList<ChunkPos>());
+			centroids.add(cityChunks.get(i)); //adds arbitrary points as first centroids
+		}
+		
 		//Creates districts by k-means algorithm
 		boolean changed = true;
 		while(changed) {
-			System.out.println("sneep");
 			changed = false;
 			for(int i = 0; i < districtNumber; i++) {
 				districtList.set(i, new ArrayList<ChunkPos>());
@@ -287,7 +286,9 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 			for(ChunkPos chunk : cityChunks) {
 				int lowest = 0;
 				for(int j = 0; j < centroids.size(); j++) {
-					if(centroids.get(j).getChessboardDistance(chunk) < centroids.get(lowest).getChessboardDistance(chunk)) lowest = j;
+					ChunkPos lowestChunk = centroids.get(lowest);
+					ChunkPos jChunk = centroids.get(j);
+					if(Math.abs(jChunk.x - chunk.x) + Math.abs(jChunk.z - chunk.z) < Math.abs(lowestChunk.x - chunk.x) + Math.abs(lowestChunk.z - chunk.z)) lowest = j;
 				}
 				districtList.get(lowest).add(chunk);
 			}
@@ -314,7 +315,7 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 		}
 		
 		//Calculate Point of Inaccessibility for each district, store in anchors[]
-		int[] minDists = {Integer.MAX_VALUE,Integer.MAX_VALUE,Integer.MAX_VALUE,Integer.MAX_VALUE};
+		int[] minDists = {Integer.MAX_VALUE,Integer.MAX_VALUE,Integer.MAX_VALUE,Integer.MAX_VALUE,Integer.MAX_VALUE};
 		ChunkPos[] PoI = new ChunkPos[districtNumber]; //Points of Inaccessibility / Places of Interest
 		for(int i = 0; i < districtNumber; i++) {
 			ArrayList<ChunkPos> list = districtList.get(i);
@@ -332,7 +333,7 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 		}
 		
 		//Finished Generation!		
-		
+
 		//Rewrites the smaller map into a map of appropriate size
 		cityMap = new boolean[176][176];
 		
@@ -346,8 +347,8 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 		}
 		long[] anchors = new long[districtNumber];
 		for(int i = 0; i < districtNumber; i++) {
-				anchors[i] = BlockPos.asLong(PoI[i].x*4 + x - 80, heightModeIndex, PoI[i].z*4 + z - 80);
-			}
+				anchors[i] 	= BlockPos.asLong(PoI[i].x*4 + x - 80, heightModeIndex, PoI[i].z*4 + z - 80);
+		}
 		
 		byte byteHeight = (byte)(heightModeIndex + Byte.MIN_VALUE);
 		byte biome = (byte)biomeModeIndex;
@@ -389,7 +390,7 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 			CompoundNBT city = PPWorldSavedData.getCity(new ChunkPos(chunkX, chunkZ));
 //			int biome = city.getByte("biome");
 			
-			DebugCityManager.start(templateManagerIn, new BlockPos(x, y, z), city, this.pieces, random);
+			DebugCityPieces.start(templateManagerIn, new BlockPos(x, y, z), city, this.pieces, random);
 			
 			this.calculateBoundingBox();
 		}
