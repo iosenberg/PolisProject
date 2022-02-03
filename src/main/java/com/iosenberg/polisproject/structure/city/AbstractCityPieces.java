@@ -17,7 +17,6 @@ import net.minecraft.world.gen.feature.template.Template;
 import net.minecraft.world.gen.feature.template.TemplateManager;
 
 public class AbstractCityPieces {
-
 	
 	public static class Piece extends TemplateStructurePiece {
 		private ResourceLocation resourceLocation;

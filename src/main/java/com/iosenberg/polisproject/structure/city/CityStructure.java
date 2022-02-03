@@ -388,9 +388,9 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 			int y = generator.getBaseHeight(x, z, Heightmap.Type.WORLD_SURFACE_WG);
 			
 			CompoundNBT city = PPWorldSavedData.getCity(new ChunkPos(chunkX, chunkZ));
-//			int biome = city.getByte("biome");
-			
-			DebugCityPieces.start(templateManagerIn, new BlockPos(x, y, z), city, this.pieces, random);
+			int biome = city.getByte("biome");
+			if(biome != biomeMap.get("DESERT")) return;
+			DesertCityPieces.start(templateManagerIn, new BlockPos(x, y, z), city, this.pieces, random);
 			
 			this.calculateBoundingBox();
 		}
