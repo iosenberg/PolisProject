@@ -22,6 +22,7 @@ public class DesertCityPieces extends AbstractCityPieces {
 		{
 				new ResourceLocation(PolisProject.MODID, "desert_city/fountain"),
 				new ResourceLocation(PolisProject.MODID, "desert_city/garden"),
+				new ResourceLocation(PolisProject.MODID, "desert_city/house_of_wisdom"),
 				new ResourceLocation(PolisProject.MODID, "desert_city/obelisk"),
 				new ResourceLocation(PolisProject.MODID, "desert_city/well")
 		};
@@ -30,6 +31,7 @@ public class DesertCityPieces extends AbstractCityPieces {
 		{
 				new BlockPos(-6, 0, -6),
 				new BlockPos(-10, 0, -10),
+				new BlockPos(-19, 0, -20),
 				new BlockPos(-8, 0, -8),
 				new BlockPos(-4, 0, -4)
 		};
@@ -77,8 +79,34 @@ public class DesertCityPieces extends AbstractCityPieces {
 				int z = anchorsPoints[i].y;
 				int destX = anchorsPoints[j].x;
 				int destZ = anchorsPoints[j].y;
-				if(x < destX) x++;
-				if(x > destX) x--;
+				
+				//TODO Mnyeh offsets don't work. Figure it out later
+				//Add offsets
+//				if(x < destX) {
+//					x-=OFFSET[i].getX();
+//					destZ+=OFFSET[j].getX();
+//				}
+//				else if(x > destX) {
+//					x+=OFFSET[i].getX();
+//					destX-=OFFSET[j].getX();
+//				}				
+//				if(z < destZ) {
+//					z-=OFFSET[i].getZ();
+//					destZ+=OFFSET[j].getZ();
+//				}
+//				else if(z > destZ) {
+//					z+=OFFSET[i].getZ();
+//					destZ-=OFFSET[j].getZ();
+//				}
+//				
+				//Generate roads
+				if(x < destX) {
+					x++;
+				}
+				if(x > destX) {
+					x--;
+				}
+				
 				LinkedList<Point> streetList = new LinkedList<Point>();
 				while(x!=destX && cityMap[x][z]!=3 && cityMap[x][z]!=0) {
 					streetList.add(new Point(x,z));

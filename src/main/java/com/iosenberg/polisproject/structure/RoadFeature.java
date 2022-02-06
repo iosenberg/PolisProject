@@ -85,9 +85,9 @@ public class RoadFeature extends Feature<NoFeatureConfig>{
 		//List of corners sorted by distance from source
 		ArrayList<ChunkPos> destinations = new ArrayList<ChunkPos>(4);
 		destinations.add(new ChunkPos(0,0));
-		destinations.add(new ChunkPos(0, 64));
-		destinations.add(new ChunkPos(64, 0));
-		destinations.add(new ChunkPos(64, 64));
+		destinations.add(new ChunkPos(0, JUNCTION_SPACE));
+		destinations.add(new ChunkPos(JUNCTION_SPACE, 0));
+		destinations.add(new ChunkPos(JUNCTION_SPACE, JUNCTION_SPACE));
 		destinations.sort((a, b) -> source.x - a.x + source.z - a.z + source.x - b.x + source.z - b.z);
 		
 		//Removes destinations from the list if they are too far away (by chessboard distance) or if the list is too big
