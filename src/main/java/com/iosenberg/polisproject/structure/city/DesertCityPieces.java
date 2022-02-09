@@ -16,14 +16,22 @@ import net.minecraft.world.gen.feature.template.TemplateManager;
 
 public class DesertCityPieces extends AbstractCityPieces {
 	private static final ResourceLocation BLOCK = new ResourceLocation(PolisProject.MODID, "block");
-	private static final ResourceLocation STREET = new ResourceLocation(PolisProject.MODID, "street");
+	private static final ResourceLocation[] STREETS = 
+			{
+					new ResourceLocation(PolisProject.MODID, "desert_city/street_1"),
+					new ResourceLocation(PolisProject.MODID, "desert_city/street_2"),
+					new ResourceLocation(PolisProject.MODID, "desert_city/street_3"),
+					new ResourceLocation(PolisProject.MODID, "desert_city/street_4")
+			};
 	
 	private static final ResourceLocation[] ANCHORS = 
 		{
 				new ResourceLocation(PolisProject.MODID, "desert_city/fountain"),
 				new ResourceLocation(PolisProject.MODID, "desert_city/garden"),
 				new ResourceLocation(PolisProject.MODID, "desert_city/house_of_wisdom"),
+				new ResourceLocation(PolisProject.MODID, "desert_city/market"),
 				new ResourceLocation(PolisProject.MODID, "desert_city/obelisk"),
+				new ResourceLocation(PolisProject.MODID, "desert_city/plaza"),
 				new ResourceLocation(PolisProject.MODID, "desert_city/well")
 		};
 	
@@ -31,8 +39,10 @@ public class DesertCityPieces extends AbstractCityPieces {
 		{
 				new BlockPos(-6, 0, -6),
 				new BlockPos(-10, 0, -10),
-				new BlockPos(-19, 0, -20),
+				new BlockPos(-16, 0, -17),
+				new BlockPos(-10, 0, -10),
 				new BlockPos(-8, 0, -8),
+				new BlockPos(-15, 0, -15),
 				new BlockPos(-4, 0, -4)
 		};
 	
@@ -122,7 +132,7 @@ public class DesertCityPieces extends AbstractCityPieces {
 					while(!streetList.isEmpty()) {
 						Point p = streetList.pop();
 						cityMap[p.x][p.y] = 3;
-						pieceList.add(new AbstractCityPieces.Piece(templateManager, STREET, new BlockPos(p.x - offset + pos.getX(), height, p.y - offset + pos.getZ()), Rotation.NONE));
+						pieceList.add(new AbstractCityPieces.Piece(templateManager, STREETS[random.nextInt(4)], new BlockPos(p.x - offset + pos.getX() - 1, height, p.y - offset + pos.getZ() - 1), Rotation.NONE));
 					}
 				} else {
 					streetList.clear();
@@ -147,7 +157,7 @@ public class DesertCityPieces extends AbstractCityPieces {
 					while(!streetList.isEmpty()) {
 						Point p = streetList.pop();
 						cityMap[p.x][p.y] = 3;
-						pieceList.add(new AbstractCityPieces.Piece(templateManager, STREET, new BlockPos(p.x - offset + pos.getX(), height, p.y - offset + pos.getZ()), Rotation.NONE));
+						pieceList.add(new AbstractCityPieces.Piece(templateManager, STREETS[random.nextInt(4)], new BlockPos(p.x - offset + pos.getX() - 1, height, p.y - offset + pos.getZ() - 1), Rotation.NONE));
 					}
 				} else {
 					streetList.clear();
