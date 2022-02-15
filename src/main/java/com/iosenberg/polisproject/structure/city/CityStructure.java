@@ -354,9 +354,9 @@ public class CityStructure extends Structure<NoFeatureConfig>{
 		byte biome = (byte)biomeModeIndex;
 		
 		//Illegal chunks, used for road generation
-		ArrayList<ChunkPos> illegalChunks = new ArrayList<ChunkPos>(121);
-		for(int i = -5; i < 6; i++) {
-			for(int j = -5; j < 6; j++) {
+		ArrayList<ChunkPos> illegalChunks = new ArrayList<ChunkPos>(100);
+		for(int i = -4; i < 5; i++) {
+			for(int j = -4; j < 5; j++) {
 				illegalChunks.add(new ChunkPos(chunkPos.x + i,chunkPos.z + j));
 			}
 		}
