@@ -8,6 +8,7 @@ import com.iosenberg.polisproject.PolisProject;
 import com.iosenberg.polisproject.structure.RoadFeature;
 import com.iosenberg.polisproject.structure.RoadJunctionStructure;
 import com.iosenberg.polisproject.structure.RoadJunctionStructurePiece;
+import com.iosenberg.polisproject.structure.city.AbstractCityPieces;
 import com.iosenberg.polisproject.structure.city.CityStructure;
 import com.iosenberg.polisproject.structure.city.DebugCityPieces;
 
@@ -33,7 +34,7 @@ public class PPStructures {
 	public static Structure<NoFeatureConfig> ROAD_JUNCTION = new RoadJunctionStructure(NoFeatureConfig.CODEC);
 	public static Structure<NoFeatureConfig> CITY = new CityStructure(NoFeatureConfig.CODEC);
 	public static IStructurePieceType ROAD_JUNCTION_PIECE = RoadJunctionStructurePiece.Piece::new;
-	public static IStructurePieceType CITY_PIECE = DebugCityPieces.Piece::new;
+	public static IStructurePieceType CITY_PIECE = AbstractCityPieces.Piece::new;
 	
 	public static void registerStructures(Register<Structure<?>> event) {
 		PolisProject.register(event.getRegistry(), ROAD_JUNCTION, "road_junction");
