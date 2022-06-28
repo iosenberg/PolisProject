@@ -37,6 +37,7 @@ public class DesertCityPieces extends AbstractCityPieces {
 		int height = (int)(city.getByte("height") - Byte.MIN_VALUE);
 		byte[] byteMap = city.getByteArray("map");
 		long[] anchors = city.getLongArray("anchors");
+		BlockPos centerPos = new BlockPos(pos.getX(), height, pos.getZ());
 		
 		//translate 1d byte map into 2d citymap
 		byte[][] cityMap = new byte[176][176];
@@ -64,29 +65,8 @@ public class DesertCityPieces extends AbstractCityPieces {
 			}
 		}
 		
-		//Generate walls
-		ArrayList<BlockPos> wallsList = new ArrayList<BlockPos>();
-		generateWalls(cityMap, pieceList, pos, templateManager, wallsList);
-		for(int i = 0; i < 176; i+=15) {
-			for(int j = 0; j < 176; j+=15) {
-				boolean bad = false;
-				for(int k = 0; k < 15; k++) {
-					for(int l = 0; l < 15; l++) {
-						if(cityMap[i+k][j+l] == 0) {
-							bad = true;
-							break;
-						}
-					}
-					if(bad) break;
-				}
-				if(!bad) {
-					wallsList.addAll(List.of(new BlockPos(i, height, j), new BlockPos(i + 15, height, j), new BlockPos(i + 30, height, j),
-											new BlockPos(i, height, j + 15), new BlockPos(i + 15, height, j + 15), new BlockPos(i + 30, height, j + 15),
-											new BlockPos(i, height, j + 30), new BlockPos(i + 15, height, j + 30), new BlockPos(i + 30, height, j + 30)));
-				}
-			}
-		}
-		
+		//Generate walls and roads. Adds them to pieceList and updates cityMap
+		generateWallsAndRoads(cityMap, pieceList, centerPos, templateManager, 4);
 		
 		
 		ArrayList<List<BlockPos>> roadPoints = new ArrayList<List<BlockPos>>();

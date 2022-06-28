@@ -6,13 +6,16 @@ import java.util.List;
 import java.util.Random;
 
 import com.iosenberg.polisproject.PolisProject;
+import com.iosenberg.polisproject.dimension.PPWorldSavedData;
 import com.iosenberg.polisproject.init.PPStructures;
+import com.iosenberg.polisproject.structure.city.AbstractCityManager.Piece;
 
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.Mirror;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.Rotation;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.MutableBoundingBox;
 import net.minecraft.world.IServerWorld;
 import net.minecraft.world.gen.feature.structure.StructurePiece;
@@ -29,8 +32,8 @@ public class AbstractCityPieces {
 	 * generates walls, fills in appropriate spaces on the map, then populates
 	 * wallsList with a list of BlockPoses at which to place walls
 	 */
-	static byte[][] generateWalls(byte[][] mapIn, List<StructurePiece> pieceList, BlockPos pos,
-			TemplateManager templateManager, ArrayList<BlockPos> wallsList) {
+	static byte[][] generateWallsAndRoads(byte[][] mapIn, List<StructurePiece> pieceList, BlockPos pos,
+			TemplateManager templateManager, int biome) {
 		// Reduce wall map to 35x35 (~176 block array in 5 block chunks)
 		final int WALL_SIZE = 5;
 		final int WALL_MAX = 176 / WALL_SIZE;
@@ -131,57 +134,116 @@ public class AbstractCityPieces {
 
 		// Begin placement of walls in hashmap?
 		// TODO FIND A BETTER WAY TO STORE/CHECK??
-		ArrayList<BlockPos> walls = new ArrayList<>();
+		System.out.println("beep beep");
+		ArrayList<BlockPos> wallsAndCorners = new ArrayList<>();
 		byte[][] newMap = new byte[176 / WALL_SIZE][176 / WALL_SIZE];
+
 		for (int i = 1; i < WALL_MAX - 1; i++) {
 			for (int j = 1; j < WALL_MAX - 1; j++) {
 				if (map[i][j]) {
 					newMap[i][j] = 1;
-					for (int k = -1; k < 2; k++) {
-						for (int l = -1; l < 2; l++) {
+					for (int k = -1; k < 2 && newMap[i][j] != 2; k++) {
+						for (int l = -1; l < 2 && newMap[i][j] != 2; l++) {
 							if (!map[i + k][j + l]) {
+								wallsAndCorners.add(new BlockPos(i, 0, j));
 								newMap[i][j] = 2;
-								break;
+//								break;
 							}
 						}
-						if (newMap[i][j] == 2)
-							break;
+//						if (newMap[i][j] == 2)
+//							break;
 					}
-					if (newMap[i][j] == 2) {
-						walls.add(new BlockPos(i,0,j));
-					}
+//					if (newMap[i][j] == 2) 
+//						break;
 				}
 			}
 		}
 
+		ArrayList<BlockPos> walls = new ArrayList<>();
+		ArrayList<BlockPos> wallsForRoadGeneration = new ArrayList<>();
+
 		// Go through again and either place corner in piece list or add wall to
 		// wallsList (to determine wall or gate)
-		for(BlockPos wall : walls) {
-			 int i = wall.getX();
-			 int j = wall.getZ();
-				if (newMap[i][j] == 2) {
-					int x = pos.getX() + i * WALL_SIZE + WALL_SIZE / 2 - OFFSET;
-					
-					int z = pos.getZ() + j * WALL_SIZE + WALL_SIZE / 2 - OFFSET;
-					System.out.println(x + "," + z);
-					// If it's not a corner
-					if (newMap[i - 1][j] == newMap[i + 1][j] || newMap[i][j - 1] == newMap[i][j + 1]) {
+		for (BlockPos wall : wallsAndCorners) {
+			int i = wall.getX();
+			int j = wall.getZ();
+			BlockPos wallPos = new BlockPos(pos.getX() + i * WALL_SIZE + WALL_SIZE / 2 - OFFSET, pos.getY() + 1,
+					pos.getZ() + j * WALL_SIZE + WALL_SIZE / 2 - OFFSET);
+			// If it's not a corner
+			if (newMap[i - 1][j] == newMap[i + 1][j] || newMap[i][j - 1] == newMap[i][j + 1]) {
+				walls.add(wall);
+				wallsForRoadGeneration.add(new BlockPos(wall.getX() * WALL_SIZE + WALL_SIZE / 2, pos.getY() + 1,
+						wall.getZ() * WALL_SIZE + WALL_SIZE / 2));
+			}
+			// If it's a corner
+			else {
+				Rotation rot = Rotation.NONE;
+				if (newMap[i + 1][j] == 2 && newMap[i][j + 1] == 2) {
+					rot = Rotation.CLOCKWISE_90;
+					wallPos = wallPos.offset(2, 0, -2);
+				}
+				if (newMap[i - 1][j] == 2 && newMap[i][j + 1] == 2) {
+					rot = Rotation.CLOCKWISE_180;
+					wallPos = wallPos.offset(2, 0, 2);
+				}
+				if (newMap[i - 1][j] == 2 && newMap[i][j - 1] == 2) {
+					rot = Rotation.COUNTERCLOCKWISE_90;
+					wallPos = wallPos.offset(-2, 0, 2);
+				}
+				// If no change/if still none rotation
+				if (rot.equals(Rotation.NONE))
+					wallPos = wallPos.offset(-2, 0, -2);
+				pieceList.add(new AbstractCityPieces.Piece(templateManager,
+						new ResourceLocation(PolisProject.MODID, "desert_city/wall_corner_1"), wallPos, rot));
+			}
 
-					}
-					// If it's a corner
-					else {
-						Rotation rot = Rotation.NONE;
-						if (newMap[i + 1][j] == 2 && newMap[i][j + 1] == 2)
-							rot = Rotation.CLOCKWISE_90;
-						if (newMap[i - 1][j] == 2 && newMap[i][j + 1] == 2)
-							rot = Rotation.CLOCKWISE_180;
-						if (newMap[i - 1][j] == 2 && newMap[i][j - 1] == 2)
-							rot = Rotation.COUNTERCLOCKWISE_90;
-						pieceList.add(new AbstractCityPieces.Piece(templateManager,
-								new ResourceLocation(PolisProject.MODID, "desert_city/wall_corner_1"),
-								new BlockPos(x, pos.getY() - 1, z), rot));
-					}
-				
+		}
+
+		// Generate roads and gates using wall data
+		ArrayList<BlockPos> roads = new ArrayList<BlockPos>();
+		HashMap<String, BlockPos> gates = new HashMap<>();
+		generateCityRoads(pos, wallsForRoadGeneration, roads, gates);
+
+		// Go through again and either place corner in piece list or add wall to
+		// wallsList (to determine wall or gate)
+		for (BlockPos wall : walls) {
+			int i = wall.getX();
+			int j = wall.getZ();
+			BlockPos wallPos = new BlockPos(pos.getX() + i * WALL_SIZE + WALL_SIZE / 2 - OFFSET, pos.getY() + 1,
+					pos.getZ() + j * WALL_SIZE + WALL_SIZE / 2 - OFFSET);
+			//TODO FIX THIS IT'S A REALLY MESSY SYSTEM
+			BlockPos gateLocation = new BlockPos(wallPos.getX() - pos.getX() + OFFSET, wallPos.getY(),
+					wallPos.getZ() - pos.getZ() + OFFSET);
+			// If it's not a corner
+			Rotation rot = Rotation.NONE;
+			if (newMap[i][j - 1] == 0) {
+				rot = Rotation.CLOCKWISE_90;
+				wallPos = wallPos.offset(2, 0, -1);
+			}
+			if (newMap[i + 1][j] == 0) {
+				rot = Rotation.CLOCKWISE_180;
+				wallPos = wallPos.offset(1, 0, 2);
+			}
+			if (newMap[i][j + 1] == 0) {
+				rot = Rotation.COUNTERCLOCKWISE_90;
+				wallPos = wallPos.offset(-2, 0, 1);
+			}
+			// If no change/if still none rotation
+			if (rot.equals(Rotation.NONE))
+				wallPos = wallPos.offset(-1, 0, -2);
+			System.out.println(gateLocation.toShortString());
+			pieceList.add(new AbstractCityPieces.Piece(templateManager,
+					gates.containsKey(gateLocation.toShortString())
+							? new ResourceLocation(PolisProject.MODID, "desert_city/wall_gate_1")
+							: new ResourceLocation(PolisProject.MODID, "desert_city/wall_1"),
+					wallPos, rot));
+		}
+
+		for (BlockPos road : roads) {
+			for (int i = pos.getY(); i < 80; i++) {
+//				BlockPos newPos = new BlockPos(road.getX() +)
+				pieceList.add(new AbstractCityPieces.Piece(templateManager,
+						new ResourceLocation(PolisProject.MODID, "street"), road.above(i), Rotation.NONE));
 			}
 		}
 
@@ -197,6 +259,147 @@ public class AbstractCityPieces {
 		}
 
 		return byteMap;
+	}
+
+	private static void generateCityRoads(BlockPos pos, ArrayList<BlockPos> walls, ArrayList<BlockPos> roads,
+			HashMap<String, BlockPos> gates) {
+
+		ChunkPos chunkPos = new ChunkPos(pos.getX() >> 4, pos.getZ() >> 4);
+
+		ArrayList<ChunkPos> connections = new ArrayList<>();
+
+		for (int i = 0; i < 12; i++) {
+
+			// North (-z)
+			ChunkPos chunk = new ChunkPos(chunkPos.x - 5 + i, chunkPos.z - 5);
+			CompoundNBT road = PPWorldSavedData.getRoad(chunk);
+			if (road != null) {
+				int minX = 0 + i * 16;
+				int maxX = minX + 15;
+				BlockPos chunkAsBlockPos = new BlockPos(minX + 8, 0, 8); // z = middle block of smallest chunk
+				roads.add(chunkAsBlockPos);
+				System.out.println("NORTH SNEE SNEE: " + chunkAsBlockPos.toString());
+
+				// Closest is the closest wall to the road
+				// If a wall is found that is within the x range of the chunk, withinChunk is
+				// set to true, end
+				// then only walls within that range are considered
+				BlockPos closest = new BlockPos(-200, 0, -200);
+				boolean withinChunk = false;
+				for (BlockPos wall : walls) {
+					if (withinChunk) {
+						if (wall.getX() > minX && wall.getX() < maxX
+								&& wall.distManhattan(chunkAsBlockPos) < closest.distManhattan(chunkAsBlockPos)) {
+							closest = wall;
+						}
+					} else {
+						if (wall.getX() > minX && wall.getX() < maxX) {
+							withinChunk = true;
+							closest = wall;
+						} else if (wall.distManhattan(chunkAsBlockPos) < closest.distManhattan(chunkAsBlockPos)) {
+							closest = wall;
+						}
+					}
+				}
+				gates.put(closest.toShortString(), closest);
+				System.out.println("Gate placed at " + closest.toShortString());
+			}
+
+			// South (+z)
+			chunk = new ChunkPos(chunkPos.x - 5 + i, chunkPos.z + 6);
+			road = PPWorldSavedData.getRoad(chunk);
+			if (road != null) {
+				int minX = 0 + i * 16;
+				int maxX = minX + 15;
+				BlockPos chunkAsBlockPos = new BlockPos(minX + 8, 0, 168); // z = middle block of largest chunk
+				roads.add(chunkAsBlockPos);
+				System.out.println("SOUTH SNEE SNEE: " + chunkAsBlockPos.toString());
+
+				BlockPos closest = new BlockPos(-200, 0, -200);
+				boolean withinChunk = false;
+				for (BlockPos wall : walls) {
+					if (withinChunk) {
+						if (wall.getX() > minX && wall.getX() < maxX
+								&& wall.distManhattan(chunkAsBlockPos) < closest.distManhattan(chunkAsBlockPos)) {
+							closest = wall;
+						}
+					} else {
+						if (wall.getX() > minX && wall.getX() < maxX) {
+							withinChunk = true;
+							closest = wall;
+						} else if (wall.distManhattan(chunkAsBlockPos) < closest.distManhattan(chunkAsBlockPos)) {
+							closest = wall;
+						}
+					}
+				}
+				gates.put(closest.toShortString(), closest);
+				System.out.println("Gate placed at " + closest.toShortString());
+			}
+
+			// West (-x)
+			chunk = new ChunkPos(chunkPos.x - 5, chunkPos.z - 5 + i);
+			road = PPWorldSavedData.getRoad(chunk);
+			if (road != null) {
+				int minZ = 0 + i * 16;
+				int maxZ = minZ + 15;
+				BlockPos chunkAsBlockPos = new BlockPos(8, 0, minZ + 8); // z = middle block of largest chunk
+				roads.add(chunkAsBlockPos);
+				System.out.println("WEST SNEE SNEE: " + chunkAsBlockPos.toString());
+
+				BlockPos closest = new BlockPos(-200, 0, -200);
+				boolean withinChunk = false;
+				for (BlockPos wall : walls) {
+					if (withinChunk) {
+						if (wall.getZ() > minZ && wall.getZ() < maxZ
+								&& wall.distManhattan(chunkAsBlockPos) < closest.distManhattan(chunkAsBlockPos)) {
+							closest = wall;
+						}
+					} else {
+						if (wall.getZ() > minZ && wall.getZ() < maxZ) {
+							withinChunk = true;
+							closest = wall;
+						} else if (wall.distManhattan(chunkAsBlockPos) < closest.distManhattan(chunkAsBlockPos)) {
+							closest = wall;
+						}
+					}
+				}
+				gates.put(closest.toShortString(), closest);
+				System.out.println("Gate placed at " + closest.toShortString());
+			}
+
+			// East (+x)
+			chunk = new ChunkPos(chunkPos.x + 6, chunkPos.z - 5 + i);
+			road = PPWorldSavedData.getRoad(chunk);
+			if (road != null) {
+				int minZ = 0 + i * 16;
+				int maxZ = minZ + 15;
+				BlockPos chunkAsBlockPos = new BlockPos(168, 0, minZ + 8); // z = middle block of largest chunk
+				roads.add(chunkAsBlockPos);
+				System.out.println("EAST SNEE SNEE: " + chunkAsBlockPos.toString());
+
+				BlockPos closest = new BlockPos(-200, 0, -200);
+				boolean withinChunk = false;
+				for (BlockPos wall : walls) {
+					if (withinChunk) {
+						if (wall.getZ() > minZ && wall.getZ() < maxZ
+								&& wall.distManhattan(chunkAsBlockPos) < closest.distManhattan(chunkAsBlockPos)) {
+							closest = wall;
+						}
+					} else {
+						if (wall.getZ() > minZ && wall.getZ() < maxZ) {
+							withinChunk = true;
+							closest = wall;
+						} else if (wall.distManhattan(chunkAsBlockPos) < closest.distManhattan(chunkAsBlockPos)) {
+							closest = wall;
+						}
+					}
+				}
+				gates.put(closest.toShortString(), closest);
+				System.out.println("Gate placed at " + closest.toShortString());
+			}
+
+		}
+
 	}
 
 	public static class Piece extends TemplateStructurePiece {
