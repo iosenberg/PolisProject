@@ -211,7 +211,8 @@ public class AbstractCityPieces {
 			int j = wall.getZ();
 			BlockPos wallPos = new BlockPos(pos.getX() + i * WALL_SIZE + WALL_SIZE / 2 - OFFSET, pos.getY() + 1,
 					pos.getZ() + j * WALL_SIZE + WALL_SIZE / 2 - OFFSET);
-			//TODO FIX THIS IT'S A REALLY MESSY SYSTEM
+			// TODO FIX THIS IT'S A REALLY MESSY SYSTEM
+			// TODO ALSO HOW DOES THIS WORK????? WITH ADDING THE OFFSET???
 			BlockPos gateLocation = new BlockPos(wallPos.getX() - pos.getX() + OFFSET, wallPos.getY(),
 					wallPos.getZ() - pos.getZ() + OFFSET);
 			// If it's not a corner
@@ -231,7 +232,7 @@ public class AbstractCityPieces {
 			// If no change/if still none rotation
 			if (rot.equals(Rotation.NONE))
 				wallPos = wallPos.offset(-1, 0, -2);
-			System.out.println(gateLocation.toShortString());
+//			System.out.println(gateLocation.toShortString());
 			pieceList.add(new AbstractCityPieces.Piece(templateManager,
 					gates.containsKey(gateLocation.toShortString())
 							? new ResourceLocation(PolisProject.MODID, "desert_city/wall_gate_1")
@@ -240,10 +241,13 @@ public class AbstractCityPieces {
 		}
 
 		for (BlockPos road : roads) {
-			for (int i = pos.getY(); i < 80; i++) {
-//				BlockPos newPos = new BlockPos(road.getX() +)
-				pieceList.add(new AbstractCityPieces.Piece(templateManager,
-						new ResourceLocation(PolisProject.MODID, "street"), road.above(i), Rotation.NONE));
+			System.out.println((pos.getX() + road.getX() - OFFSET) + "," + (pos.getZ() + road.getZ() - OFFSET));
+			for(int i = -1; i < 2; i++) {
+				for(int j = -1; j < 2; j++) {
+					BlockPos newPos = new BlockPos(pos.getX() + road.getX() - OFFSET + i, pos.getY(), pos.getZ() + road.getZ() - OFFSET + j);
+					pieceList.add(new AbstractCityPieces.Piece(templateManager,
+							new ResourceLocation(PolisProject.MODID, "street"), newPos, Rotation.NONE));
+				}
 			}
 		}
 
@@ -268,11 +272,14 @@ public class AbstractCityPieces {
 
 		ArrayList<ChunkPos> connections = new ArrayList<>();
 
+		// Checks outermost row of chunks in each direction
 		for (int i = 0; i < 12; i++) {
 
 			// North (-z)
 			ChunkPos chunk = new ChunkPos(chunkPos.x - 5 + i, chunkPos.z - 5);
 			CompoundNBT road = PPWorldSavedData.getRoad(chunk);
+			// If there is a roadchunk there, find the nearest non-corner wall, add it to
+			// gates, then
 			if (road != null) {
 				int minX = 0 + i * 16;
 				int maxX = minX + 15;
@@ -302,7 +309,17 @@ public class AbstractCityPieces {
 					}
 				}
 				gates.put(closest.toShortString(), closest);
-				System.out.println("Gate placed at " + closest.toShortString());
+
+				// If the road is direct, connect the road
+				if (withinChunk) {
+					BlockPos roadPos = closest.south();
+					while (roadPos.getZ() != 0) {
+						roads.add(roadPos);
+						roadPos = roadPos.north();
+					}
+					PPWorldSavedData.updateRoadStarts(chunk,
+							new ChunkPos[] { new ChunkPos(roadPos.getX() % 16, roadPos.getZ()) });
+				}
 			}
 
 			// South (+z)
@@ -333,7 +350,17 @@ public class AbstractCityPieces {
 					}
 				}
 				gates.put(closest.toShortString(), closest);
-				System.out.println("Gate placed at " + closest.toShortString());
+
+				// If the road is direct, connect the road
+				if (withinChunk) {
+					BlockPos roadPos = closest.north();
+					while (roadPos.getZ() != 175) {
+						roads.add(roadPos);
+						roadPos = roadPos.south();
+					}
+					PPWorldSavedData.updateRoadStarts(chunk,
+							new ChunkPos[] { new ChunkPos(roadPos.getX() % 16, roadPos.getZ()) });
+				}
 			}
 
 			// West (-x)
@@ -364,7 +391,17 @@ public class AbstractCityPieces {
 					}
 				}
 				gates.put(closest.toShortString(), closest);
-				System.out.println("Gate placed at " + closest.toShortString());
+
+				// If the road is direct, just connect the road
+				if (withinChunk) {
+					BlockPos roadPos = closest.east();
+					while (roadPos.getX() != 0) {
+						roads.add(roadPos);
+						roadPos = roadPos.west();
+					}
+					PPWorldSavedData.updateRoadStarts(chunk,
+							new ChunkPos[] { new ChunkPos(roadPos.getX(), roadPos.getZ() % 16) });
+				}
 			}
 
 			// East (+x)
@@ -395,7 +432,17 @@ public class AbstractCityPieces {
 					}
 				}
 				gates.put(closest.toShortString(), closest);
-				System.out.println("Gate placed at " + closest.toShortString());
+
+				// If the road is direct, just connect the road
+				if (withinChunk) {
+					BlockPos roadPos = closest.west();
+					while (roadPos.getX() != 175) {
+						roads.add(roadPos);
+						roadPos = roadPos.east();
+					}
+					PPWorldSavedData.updateRoadStarts(chunk,
+							new ChunkPos[] { new ChunkPos(roadPos.getX(), roadPos.getZ() % 16) });
+				}
 			}
 
 		}
