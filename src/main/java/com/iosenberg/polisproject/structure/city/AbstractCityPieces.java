@@ -3,12 +3,13 @@ package com.iosenberg.polisproject.structure.city;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.PriorityQueue;
 import java.util.Random;
 
 import com.iosenberg.polisproject.PolisProject;
 import com.iosenberg.polisproject.dimension.PPWorldSavedData;
 import com.iosenberg.polisproject.init.PPStructures;
-import com.iosenberg.polisproject.structure.city.AbstractCityManager.Piece;
+import com.iosenberg.polisproject.utils.GeneralUtils;
 
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.Mirror;
@@ -32,8 +33,8 @@ public class AbstractCityPieces {
 	 * generates walls, fills in appropriate spaces on the map, then populates
 	 * wallsList with a list of BlockPoses at which to place walls
 	 */
-	static byte[][] generateWallsAndRoads(byte[][] mapIn, List<StructurePiece> pieceList, BlockPos pos,
-			TemplateManager templateManager, int biome) {
+	static byte[][] generateWallsAndRoads(byte[][] mapIn, BlockPos pos, List<StructurePiece> pieceList,
+			List<BlockPos> gateList, TemplateManager templateManager, int biome) {
 		// Reduce wall map to 35x35 (~176 block array in 5 block chunks)
 		final int WALL_SIZE = 5;
 		final int WALL_MAX = 176 / WALL_SIZE;
@@ -233,18 +234,21 @@ public class AbstractCityPieces {
 			if (rot.equals(Rotation.NONE))
 				wallPos = wallPos.offset(-1, 0, -2);
 //			System.out.println(gateLocation.toShortString());
-			pieceList.add(new AbstractCityPieces.Piece(templateManager,
-					gates.containsKey(gateLocation.toShortString())
-							? new ResourceLocation(PolisProject.MODID, "desert_city/wall_gate_1")
-							: new ResourceLocation(PolisProject.MODID, "desert_city/wall_1"),
-					wallPos, rot));
+			if (gates.containsKey(gateLocation.toShortString())) {
+				gateList.add(gateLocation);
+				pieceList.add(new AbstractCityPieces.Piece(templateManager,
+						new ResourceLocation(PolisProject.MODID, "desert_city/wall_gate_1"), wallPos, rot));
+			}
+			else pieceList.add(new AbstractCityPieces.Piece(templateManager,
+					new ResourceLocation(PolisProject.MODID, "desert_city/wall_1"), wallPos, rot));
 		}
 
 		for (BlockPos road : roads) {
 			System.out.println((pos.getX() + road.getX() - OFFSET) + "," + (pos.getZ() + road.getZ() - OFFSET));
-			for(int i = -1; i < 2; i++) {
-				for(int j = -1; j < 2; j++) {
-					BlockPos newPos = new BlockPos(pos.getX() + road.getX() - OFFSET + i, pos.getY(), pos.getZ() + road.getZ() - OFFSET + j);
+			for (int i = -1; i < 2; i++) {
+				for (int j = -1; j < 2; j++) {
+					BlockPos newPos = new BlockPos(pos.getX() + road.getX() - OFFSET + i, pos.getY(),
+							pos.getZ() + road.getZ() - OFFSET + j);
 					pieceList.add(new AbstractCityPieces.Piece(templateManager,
 							new ResourceLocation(PolisProject.MODID, "street"), newPos, Rotation.NONE));
 				}
@@ -269,8 +273,6 @@ public class AbstractCityPieces {
 			HashMap<String, BlockPos> gates) {
 
 		ChunkPos chunkPos = new ChunkPos(pos.getX() >> 4, pos.getZ() >> 4);
-
-		ArrayList<ChunkPos> connections = new ArrayList<>();
 
 		// Checks outermost row of chunks in each direction
 		for (int i = 0; i < 12; i++) {
@@ -447,6 +449,146 @@ public class AbstractCityPieces {
 
 		}
 
+	}
+
+	static byte[][] generateAllStreets(byte[][] mapIn, BlockPos pos, BlockPos[] connectionPoints,
+			List<StructurePiece> pieceList, TemplateManager templateManager, int biome) {
+		byte[][] weightMap = new byte[176][176];
+		for (int i = 0; i < 176; i++) {
+			for (int j = 0; j < 176; j++) {
+				if (mapIn[i][j] == 3)
+					weightMap[i][j] = 1;
+				else if (mapIn[i][j] == 4) {
+					weightMap[i][j] = 2;
+				} else
+					weightMap[i][j] = Byte.MAX_VALUE;
+			}
+		}
+
+		for (int i = 0; i < connectionPoints.length - 1; i++) {
+			for (int j = i; j < connectionPoints.length; j++) {
+				ChunkPos s = new ChunkPos(connectionPoints[i].getX(), connectionPoints[i].getZ());
+				ChunkPos d = new ChunkPos(connectionPoints[j].getX(), connectionPoints[j].getZ());
+				ChunkPos[] roads = generateStreet(weightMap, s, d);
+
+				for (ChunkPos r : roads) {
+					mapIn[r.x][r.z] = 3;
+					weightMap[r.x][r.z] = 1;
+					BlockPos streetPos = new BlockPos(r.x + pos.getX() - OFFSET, pos.getY(), r.z + pos.getZ() - OFFSET);
+					pieceList.add(new AbstractCityPieces.Piece(templateManager,
+							new ResourceLocation(PolisProject.MODID, "street"), streetPos, Rotation.NONE));
+				}
+			}
+		}
+
+		return mapIn;
+	}
+
+	// Another A* algorithm. Works with chunkposes instead of blockposes so there's
+	// no extraneous y wasting data
+	private static ChunkPos[] generateStreet(byte[][] weightMap, ChunkPos s, ChunkPos d) {
+		int xMax = weightMap.length;
+		int zMax = weightMap[0].length;
+
+		boolean[][] visited = new boolean[xMax][zMax];
+		int[][] distance = new int[xMax][zMax];
+		ChunkPos[][] previousChunk = new ChunkPos[xMax][zMax];
+		previousChunk[s.x][s.z] = s;
+		for (int i = 0; i < xMax; i++) {
+			for (int j = 0; j < zMax; j++) {
+				distance[i][j] = Integer.MAX_VALUE;
+			}
+		}
+
+		PriorityQueue<ChunkPos> queue = new PriorityQueue<ChunkPos>((a, b) -> distance[a.x][a.z]
+				+ GeneralUtils.ManhattanDistance(a, d) - distance[b.x][b.z] - GeneralUtils.ManhattanDistance(b, d));
+		distance[s.x][s.z] = 0;
+		queue.offer(s);
+		visited[s.x][s.z] = true;
+		while (!visited[d.x][d.z]) {
+			ChunkPos pos = queue.poll();
+			visited[pos.x][pos.z] = true;
+			if (pos.x > 0 && !visited[pos.x - 1][pos.z]) {
+				int tx = pos.x - 1; // target x
+				int tz = pos.z; // target z
+
+				// The distance is the weight of the target pos plus an additional cost if
+				// target is not in a straight line with pos and previous pos
+				int tempDist = weightMap[tx][tz] + distance[pos.x][pos.z] + 1;
+				if (tx != previousChunk[pos.x][pos.z].x && tz != previousChunk[pos.x][pos.z].z)
+					tempDist += 30;
+				if (tempDist < distance[tx][tz]) {
+					distance[tx][tz] = tempDist;
+					previousChunk[tx][tz] = pos;
+					ChunkPos chunk = new ChunkPos(tx, tz);
+					if (!queue.contains(chunk))
+						queue.offer(chunk);
+				}
+			}
+			if (pos.x < xMax - 1 && !visited[pos.x + 1][pos.z]) {
+				int tx = pos.x + 1; // target x
+				int tz = pos.z; // target z
+
+				// The distance is the weight of the target pos plus an additional cost if
+				// target is not in a straight line with pos and previous pos
+				int tempDist = weightMap[tx][tz] + distance[pos.x][pos.z] + 1;
+				if (tx != previousChunk[pos.x][pos.z].x && tz != previousChunk[pos.x][pos.z].z)
+					tempDist += 30;
+				if (tempDist < distance[tx][tz]) {
+					distance[tx][tz] = tempDist;
+					previousChunk[tx][tz] = pos;
+					ChunkPos chunk = new ChunkPos(tx, tz);
+					if (!queue.contains(chunk))
+						queue.offer(chunk);
+				}
+			}
+			if (pos.z > 0 && !visited[pos.x][pos.z - 1]) {
+				int tx = pos.x; // target x
+				int tz = pos.z - 1; // target z
+
+				// The distance is the weight of the target pos plus an additional cost if
+				// target is not in a straight line with pos and previous pos
+				int tempDist = weightMap[tx][tz] + distance[pos.x][pos.z] + 1;
+				if (tx != previousChunk[pos.x][pos.z].x && tz != previousChunk[pos.x][pos.z].z)
+					tempDist += 30;
+				if (tempDist < distance[tx][tz]) {
+					distance[tx][tz] = tempDist;
+					previousChunk[tx][tz] = pos;
+					ChunkPos chunk = new ChunkPos(tx, tz);
+					if (!queue.contains(chunk))
+						queue.offer(chunk);
+				}
+			}
+			if (pos.z < zMax - 1 && !visited[pos.x][pos.z + 1]) {
+				int tx = pos.x; // target x
+				int tz = pos.z + 1; // target z
+
+				// The distance is the weight of the target pos plus an additional cost if
+				// target is not in a straight line with pos and previous pos
+				int tempDist = weightMap[tx][tz] + distance[pos.x][pos.z] + 1;
+				if (tx != previousChunk[pos.x][pos.z].x && tz != previousChunk[pos.x][pos.z].z)
+					tempDist += 30;
+				if (tempDist < distance[tx][tz]) {
+					distance[tx][tz] = tempDist;
+					previousChunk[tx][tz] = pos;
+					ChunkPos chunk = new ChunkPos(tx, tz);
+					if (!queue.contains(chunk))
+						queue.offer(chunk);
+				}
+			}
+
+		}
+
+		// Finished algorithm. The path is stored in previousChunk[], which will be read
+		// into an ArrayList path
+		ArrayList<ChunkPos> path = new ArrayList<ChunkPos>();
+		ChunkPos chunk = d;
+		while (!chunk.equals(s)) {
+			path.add(chunk);
+			chunk = previousChunk[chunk.x][chunk.z];
+		}
+
+		return path.toArray(new ChunkPos[0]);
 	}
 
 	public static class Piece extends TemplateStructurePiece {

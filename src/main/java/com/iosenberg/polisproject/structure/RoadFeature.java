@@ -8,6 +8,7 @@ import java.util.Random;
 import org.apache.commons.lang3.RandomUtils;
 
 import com.iosenberg.polisproject.dimension.PPWorldSavedData;
+import com.iosenberg.polisproject.utils.GeneralUtils;
 import com.mojang.serialization.Codec;
 
 import net.minecraft.block.Blocks;
@@ -134,7 +135,7 @@ public class RoadFeature extends Feature<NoFeatureConfig>{
 		int xMax = weightMap.length;
 		int zMax = weightMap[0].length;
 		
-		//Run a variant of Dijkstra's algorithm
+		//Run a variant of A* from s to d
 		boolean[][] visited = new boolean[xMax][zMax];
 		int[][] distance = new int[xMax][zMax];
 		ChunkPos[][] previousChunk = new ChunkPos[xMax][zMax];
@@ -145,7 +146,7 @@ public class RoadFeature extends Feature<NoFeatureConfig>{
 		}
 		
 		//This implementation feels incredibly gross, but Java's implementation of priority queue is gross so oh well
-		PriorityQueue<ChunkPos> queue = new PriorityQueue<ChunkPos>((a, b) -> distance[a.x][a.z] - distance[b.x][b.z]);
+		PriorityQueue<ChunkPos> queue = new PriorityQueue<ChunkPos>((a, b) -> distance[a.x][a.z] + GeneralUtils.ManhattanDistance(a, d) - distance[b.x][b.z] - GeneralUtils.ManhattanDistance(b,d));
 		distance[s.x][s.z] = 0; 
 		queue.offer(s);
 		visited[s.x][s.z] = true;
