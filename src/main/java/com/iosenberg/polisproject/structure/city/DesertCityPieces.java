@@ -69,6 +69,14 @@ public class DesertCityPieces extends AbstractCityPieces {
 		//Generate walls and roads. Adds them to pieceList and updates cityMap
 		cityMap = generateWallsAndRoads(cityMap, centerPos, pieceList, gateList, templateManager, 4);
 		
+		System.out.println("WALL TYME");
+		for(int i = 0; i < 176; i++) {
+			for(int j = 0; j < 176; j++) {
+				System.out.print(/*asciiMap[*/cityMap[i][j]/*]*/);
+//				if(cityMap[i][j] == 3) pieceList.add(new AbstractCityPieces.Piece(templateManager, TEMPSTREET, new BlockPos(i - offset + pos.getX(), height, j - offset + pos.getZ()), Rotation.NONE));
+			}
+			System.out.println();
+		}
 		
 		ArrayList</*List<*/BlockPos>/*>*/ roadPoints = new ArrayList</*List<*/BlockPos>/*>*/();
 		roadPoints.addAll(gateList);
@@ -118,229 +126,119 @@ public class DesertCityPieces extends AbstractCityPieces {
 		generateAllStreets(cityMap, centerPos, roadPoints.toArray(new BlockPos[0]),
 				pieceList, templateManager, 4);
 
-		/*
-		//Place streets
-		for(int i = 0; i < roadPoints.size()-1; i++) {
-			for(int j = 1; j < roadPoints.size(); j++) {
-				List<BlockPos> list1 = roadPoints.get(i);
-				List<BlockPos> list2 = roadPoints.get(j);
-				//Source point
-				int sX = list1.get(0).getX();
-				int sZ = list1.get(0).getZ();
-				//Destination point
-				int dX = list2.get(0).getX();
-				int dZ = list2.get(0).getZ();
-				int minDist = Math.abs(sX - dX) + Math.abs(sZ - dZ);
-				
-				//Find two closest points in lists 1 and 2
-				for(int k = 0; k < list1.size(); k++) {
-					for(int l = 0; l < list2.size(); l++) {
-						int tempSX = list1.get(k).getX();
-						int tempSZ = list1.get(k).getZ();
-						int tempDX = list2.get(l).getX();
-						int tempDZ = list2.get(l).getZ();
-						int tempDist = Math.abs(tempSX - tempDX) + Math.abs(tempSZ - tempDZ);
-						if(tempDist < minDist) {
-							sX = tempSX;
-							sZ = tempSZ;
-							dX = tempDX;
-							dZ = tempDZ;
-							minDist = tempDist;
-						}
-					}
-				}
-				
-				//Now (x,z) and (destX,destZ) are the closest start points in each structure
-				
-				//TODO Mnyeh offsets don't work. Figure it out later
-				//Add offsets
-//				if(x < destX) {
-//					x-=OFFSET[i].getX();
-//					destZ+=OFFSET[j].getX();
-//				}
-//				else if(x > destX) {
-//					x+=OFFSET[i].getX();
-//					destX-=OFFSET[j].getX();
-//				}				
-//				if(z < destZ) {
-//					z-=OFFSET[i].getZ();
-//					destZ+=OFFSET[j].getZ();
-//				}
-//				else if(z > destZ) {
-//					z+=OFFSET[i].getZ();
-//					destZ-=OFFSET[j].getZ();
-//				}
-//				
-				
-//				//TODO Clean up this implementation
-//				//Generate roads				
-//				LinkedList<Point> streetList = new LinkedList<Point>(); //The list of points at which to generate roads
-//				int x;
-//				int z;
-//				//If z is the open direction, start generation with Z distance
-//				if(cityMap[sX][sZ-1] == 1 || cityMap[sX][sZ+1] == 1) {
-//					x = sX;
-//					z = sZ < dZ ? sZ + 1 : sZ - 1;
-//					while(z!=dZ && cityMap[x][z]==1) {
-//						streetList.add(new Point(x,z));
-//						if(z<dZ) z++;
-//						else z--;
-//					}
-//				}
-//				//Otherwise, start with X distance
-//				else {
-//					x = sX < dX ? sX + 1 : sX - 1;
-//					z = sZ;
-//				}
-//				while(x!=dX && cityMap[x][z]==1) {
-//					streetList.add(new Point(x,z));
-//					if(x<dX) x++;
-//					else x--;
-//				}
-//				//(In case Z isn't already done)
-//				while(z!=dZ && cityMap[x][z]==1) {
-//					streetList.add(new Point(x,z));
-//					if(z<dZ) z++;
-//					else z--;
-//				}
-//				if(cityMap[x][z]!=0) {
-//					while(!streetList.isEmpty()) {
-//						Point p = streetList.pop();
-//						cityMap[p.x][p.y] = 3;
-//						pieceList.add(new AbstractCityPieces.Piece(templateManager, STREETS[random.nextInt(4)], new BlockPos(p.x - offset + pos.getX() - 1, height, p.y - offset + pos.getZ() - 1), Rotation.NONE));
-//					}
-//				} else {
-//					streetList.clear();
-//				}
-				
-//				//then in z direction
-//				x = roadPoints.get(i).getX();
-//				z = roadPoints.get(i).getZ();
-//				if(z < destZ) z++;
-//				if(z > destZ) z--;
-//				while(z!=destZ && cityMap[x][z]==1) {
-//					streetList.add(new Point(x,z));
-//					if(z<destZ) z++;
-//					else z--;
-//				}
-//				while(x!=destX && cityMap[x][z]==1) {
-//					streetList.add(new Point(x,z));
-//					if(x<destX) x++;
-//					else x--;
-//				}
-//				if(cityMap[x][z]!=0) {
-//					while(!streetList.isEmpty()) {
-//						Point p = streetList.pop();
-//						cityMap[p.x][p.y] = 3;
-//						pieceList.add(new AbstractCityPieces.Piece(templateManager, STREETS[random.nextInt(4)], new BlockPos(p.x - offset + pos.getX() - 1, height, p.y - offset + pos.getZ() - 1), Rotation.NONE));
-//					}
-//				} else {
-//					streetList.clear();
-//				}
-			}
-		} */
-		
-//		//Generate buildings
-//		for(int i = 0; i < 176; i++) {
-//			for(int j = 0; j < 176; j++) {
-//				//Find the corners of every section of 1s surrounded by not 1s
-//				if(cityMap[i][j] == 1) {
-//					ArrayList<BlockPos> corners = new ArrayList<BlockPos>(4);
-//					
-//					boolean[][] marked = new boolean[176][176];
-//					LinkedList<BlockPos> queue = new LinkedList<BlockPos>();
-//					queue.add(new BlockPos(i, height, j));
-//					marked[i][j] = true;
-//					cityMap[i][j] = 4;
-//					
-//					//Breadth first search, adding corners to list of corners and setting all cells == 1 to 4
-//					//We don't need to worry about out of bounds because the outer 4 blocks cannot equal 1 and cannot be queued
-//					while(!queue.isEmpty()) {
-//						BlockPos queuePos = queue.poll();
-//						
-//						//check -x neighbor
-//						int x = queuePos.getX() - 1;
-//						int z = queuePos.getZ();
-//						if(!marked[x][z]) {
-//							marked[x][z] = true;
-//							if(cityMap[x][z] == 1) {
-//								cityMap[x][z] = 4;
-//								queue.add(new BlockPos(x, height, z));
-//							}
-//						}
-//						
-//						//check +x neighbor
-//						x = queuePos.getX() + 1;
-////						z is already set
-//						if(!marked[x][z]) {
-//							marked[x][z] = true;
-//							if(cityMap[x][z] == 1) {
-//								cityMap[x][z] = 4;
-//								queue.add(new BlockPos(x, height, z));
-//							}
-//						}
-//						
-//						//check -z neighbor
-//						x = queuePos.getX();
-//						z = queuePos.getZ() - 1;
-//						if(!marked[x][z]) {
-//							marked[x][z] = true;
-//							if(cityMap[x][z] == 1) {
-//								cityMap[x][z] = 4;
-//								queue.add(new BlockPos(x, height, z));
-//							}
-//						}
-//						
-//						//check +z neighbor
-//						//x is already set
-//						z = queuePos.getZ() + 1;
-//						if(!marked[x][z]) {
-//							marked[x][z] = true;
-//							if(cityMap[x][z] == 1) {
-//								cityMap[x][z] = 4;
-//								queue.add(new BlockPos(x, height, z));
-//							}
-//						}
-//						
-//						//check 8-way corners to determine whether cell is a corner
-//						int neighbors = 0;
-//						if(i != 0 && j != 0 && cityMap[i-1][j-1] != 1 && cityMap[i-1][j-1] != 4) neighbors++;
-//						if(i == 0 && j == 0) neighbors++;
-//						if(i != 0 && j != 175 && cityMap[i-1][j+1] != 1 && cityMap[i-1][j+1] != 4) neighbors++;
-//						if(i == 0 && j == 175) neighbors++;
-//						if(i != 175 && j != 0 && cityMap[i+1][j-1] != 1 && cityMap[i+1][j-1] != 4) neighbors++;
-//						if(i == 175 && j == 0) neighbors++;
-//						if(i != 175 && j != 175 && cityMap[i+1][j+1] != 1 && cityMap[i+1][j+1] != 4) neighbors++;
-//						if(i == 175 && j == 175) neighbors++;
-//						
-//						if(neighbors == 1 || neighbors == 3) cityMap[i][j] = corners.add(queuePos);
-//					}
-//					
-////					ArrayList<Point> buildingsList = BUILDING.fillWithBuildings(templateManager, corners);
-////					
-////					System.out.println("Building size for " + i + "," + j);
-////					for(Point p : buildingsList) {
-////						System.out.println(p.x + " , " + p.y);
-////					}
-//					
-////					//Set all affected cells to 4
-////					for(int k = 0; k < 176; k++) {
-////						for(int l = 0; l < 176; l++) {
-////							cityMap[k][l] = 4;
-////						}
-////					}
-//				}
-//			}
-//		}
-		
-		//Print map
-		char[] asciiMap = {'.',',','~','+',',','%'};
+		System.out.println("ROAD TIME");
 		for(int i = 0; i < 176; i++) {
 			for(int j = 0; j < 176; j++) {
 				System.out.print(/*asciiMap[*/cityMap[i][j]/*]*/);
 //				if(cityMap[i][j] == 3) pieceList.add(new AbstractCityPieces.Piece(templateManager, TEMPSTREET, new BlockPos(i - offset + pos.getX(), height, j - offset + pos.getZ()), Rotation.NONE));
 			}
 			System.out.println();
+		}
+		
+		/**
+		//Generate buildings
+		for(int i = 0; i < 176; i++) {
+			for(int j = 0; j < 176; j++) {
+				//Find the corners of every section of 1s surrounded by not 1s
+				if(cityMap[i][j] == 1) {
+					ArrayList<BlockPos> corners = new ArrayList<BlockPos>(4);
+					
+					boolean[][] marked = new boolean[176][176];
+					LinkedList<BlockPos> queue = new LinkedList<BlockPos>();
+					queue.add(new BlockPos(i, height, j));
+					marked[i][j] = true;
+					cityMap[i][j] = 4;
+					
+					//Breadth first search, adding corners to list of corners and setting all cells == 1 to 4
+					//We don't need to worry about out of bounds because the outer 4 blocks cannot equal 1 and cannot be queued
+					while(!queue.isEmpty()) {
+						BlockPos queuePos = queue.poll();
+						
+						//check -x neighbor
+						int x = queuePos.getX() - 1;
+						int z = queuePos.getZ();
+						if(!marked[x][z]) {
+							marked[x][z] = true;
+							if(cityMap[x][z] == 1) {
+								cityMap[x][z] = 4;
+								queue.add(new BlockPos(x, height, z));
+							}
+						}
+						
+						//check +x neighbor
+						x = queuePos.getX() + 1;
+//						z is already set
+						if(!marked[x][z]) {
+							marked[x][z] = true;
+							if(cityMap[x][z] == 1) {
+								cityMap[x][z] = 4;
+								queue.add(new BlockPos(x, height, z));
+							}
+						}
+						
+						//check -z neighbor
+						x = queuePos.getX();
+						z = queuePos.getZ() - 1;
+						if(!marked[x][z]) {
+							marked[x][z] = true;
+							if(cityMap[x][z] == 1) {
+								cityMap[x][z] = 4;
+								queue.add(new BlockPos(x, height, z));
+							}
+						}
+						
+						//check +z neighbor
+						//x is already set
+						z = queuePos.getZ() + 1;
+						if(!marked[x][z]) {
+							marked[x][z] = true;
+							if(cityMap[x][z] == 1) {
+								cityMap[x][z] = 4;
+								queue.add(new BlockPos(x, height, z));
+							}
+						}
+						
+						//check 8-way corners to determine whether cell is a corner
+						int neighbors = 0;
+						if(i != 0 && j != 0 && cityMap[i-1][j-1] != 1 && cityMap[i-1][j-1] != 4) neighbors++;
+						if(i == 0 && j == 0) neighbors++;
+						if(i != 0 && j != 175 && cityMap[i-1][j+1] != 1 && cityMap[i-1][j+1] != 4) neighbors++;
+						if(i == 0 && j == 175) neighbors++;
+						if(i != 175 && j != 0 && cityMap[i+1][j-1] != 1 && cityMap[i+1][j-1] != 4) neighbors++;
+						if(i == 175 && j == 0) neighbors++;
+						if(i != 175 && j != 175 && cityMap[i+1][j+1] != 1 && cityMap[i+1][j+1] != 4) neighbors++;
+						if(i == 175 && j == 175) neighbors++;
+						
+						if(neighbors == 1 || neighbors == 3) cityMap[i][j] = corners.add(queuePos);
+					}
+					
+//					ArrayList<Point> buildingsList = BUILDING.fillWithBuildings(templateManager, corners);
+//					
+//					System.out.println("Building size for " + i + "," + j);
+//					for(Point p : buildingsList) {
+//						System.out.println(p.x + " , " + p.y);
+//					}
+					
+//					//Set all affected cells to 4
+//					for(int k = 0; k < 176; k++) {
+//						for(int l = 0; l < 176; l++) {
+//							cityMap[k][l] = 4;
+//						}
+//					}
+				}
+			}
+		}
+		**/
+		
+		System.out.println("DONE!");
+		//Print map
+		char[] asciiMap = {'.',',','~','+',',','%'};
+		for(int i = 0; i < 176; i++) {
+			for(int j = 0; j < 176; j++) {
+//				System.out.print(/*asciiMap[*/cityMap[i][j]/*]*/);
+//				if(cityMap[i][j] == 3) pieceList.add(new AbstractCityPieces.Piece(templateManager, TEMPSTREET, new BlockPos(i - offset + pos.getX(), height, j - offset + pos.getZ()), Rotation.NONE));
+			}
+//			System.out.println();
 		}
 	}
 	

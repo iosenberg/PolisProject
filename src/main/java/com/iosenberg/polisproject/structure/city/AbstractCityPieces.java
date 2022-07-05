@@ -457,8 +457,8 @@ public class AbstractCityPieces {
 		for (int i = 0; i < 176; i++) {
 			for (int j = 0; j < 176; j++) {
 				if (mapIn[i][j] == 3)
-					weightMap[i][j] = 1;
-				else if (mapIn[i][j] == 4) {
+					weightMap[i][j] = 0;
+				else if (mapIn[i][j] == 1) {
 					weightMap[i][j] = 2;
 				} else
 					weightMap[i][j] = Byte.MAX_VALUE;
@@ -473,7 +473,7 @@ public class AbstractCityPieces {
 
 				for (ChunkPos r : roads) {
 					mapIn[r.x][r.z] = 3;
-					weightMap[r.x][r.z] = 1;
+					weightMap[r.x][r.z] = 0;
 					BlockPos streetPos = new BlockPos(r.x + pos.getX() - OFFSET, pos.getY(), r.z + pos.getZ() - OFFSET);
 					pieceList.add(new AbstractCityPieces.Piece(templateManager,
 							new ResourceLocation(PolisProject.MODID, "street"), streetPos, Rotation.NONE));
@@ -516,7 +516,7 @@ public class AbstractCityPieces {
 				// target is not in a straight line with pos and previous pos
 				int tempDist = weightMap[tx][tz] + distance[pos.x][pos.z] + 1;
 				if (tx != previousChunk[pos.x][pos.z].x && tz != previousChunk[pos.x][pos.z].z)
-					tempDist += 30;
+					tempDist += 2;
 				if (tempDist < distance[tx][tz]) {
 					distance[tx][tz] = tempDist;
 					previousChunk[tx][tz] = pos;
@@ -533,7 +533,7 @@ public class AbstractCityPieces {
 				// target is not in a straight line with pos and previous pos
 				int tempDist = weightMap[tx][tz] + distance[pos.x][pos.z] + 1;
 				if (tx != previousChunk[pos.x][pos.z].x && tz != previousChunk[pos.x][pos.z].z)
-					tempDist += 30;
+					tempDist += 2;
 				if (tempDist < distance[tx][tz]) {
 					distance[tx][tz] = tempDist;
 					previousChunk[tx][tz] = pos;
@@ -550,7 +550,7 @@ public class AbstractCityPieces {
 				// target is not in a straight line with pos and previous pos
 				int tempDist = weightMap[tx][tz] + distance[pos.x][pos.z] + 1;
 				if (tx != previousChunk[pos.x][pos.z].x && tz != previousChunk[pos.x][pos.z].z)
-					tempDist += 30;
+					tempDist += 2;
 				if (tempDist < distance[tx][tz]) {
 					distance[tx][tz] = tempDist;
 					previousChunk[tx][tz] = pos;
@@ -567,7 +567,7 @@ public class AbstractCityPieces {
 				// target is not in a straight line with pos and previous pos
 				int tempDist = weightMap[tx][tz] + distance[pos.x][pos.z] + 1;
 				if (tx != previousChunk[pos.x][pos.z].x && tz != previousChunk[pos.x][pos.z].z)
-					tempDist += 30;
+					tempDist += 2;
 				if (tempDist < distance[tx][tz]) {
 					distance[tx][tz] = tempDist;
 					previousChunk[tx][tz] = pos;
