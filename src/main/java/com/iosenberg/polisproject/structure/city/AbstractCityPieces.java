@@ -1,7 +1,9 @@
 package com.iosenberg.polisproject.structure.city;
 
+import java.awt.Point;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Random;
@@ -9,6 +11,7 @@ import java.util.Random;
 import com.iosenberg.polisproject.PolisProject;
 import com.iosenberg.polisproject.dimension.PPWorldSavedData;
 import com.iosenberg.polisproject.init.PPStructures;
+import com.iosenberg.polisproject.structure.city.CityBuildings.DESERT_BUILDING;
 import com.iosenberg.polisproject.utils.GeneralUtils;
 
 import net.minecraft.nbt.CompoundNBT;
@@ -238,9 +241,9 @@ public class AbstractCityPieces {
 				gateList.add(gateLocation);
 				pieceList.add(new AbstractCityPieces.Piece(templateManager,
 						new ResourceLocation(PolisProject.MODID, "desert_city/wall_gate_1"), wallPos, rot));
-			}
-			else pieceList.add(new AbstractCityPieces.Piece(templateManager,
-					new ResourceLocation(PolisProject.MODID, "desert_city/wall_1"), wallPos, rot));
+			} else
+				pieceList.add(new AbstractCityPieces.Piece(templateManager,
+						new ResourceLocation(PolisProject.MODID, "desert_city/wall_1"), wallPos, rot));
 		}
 
 		for (BlockPos road : roads) {
@@ -589,6 +592,173 @@ public class AbstractCityPieces {
 		}
 
 		return path.toArray(new ChunkPos[0]);
+	}
+
+	static ArrayList<Point> generateBuildings(byte[][] cityMap) {
+		final int height = 0;
+		ArrayList<Point> buildingsList = new ArrayList<>();
+		for (int i = 0; i < 176; i++) {
+			for (int j = 0; j < 176; j++) {
+				// Find the corners of every section of 1s surrounded by not 1s
+				if (cityMap[i][j] == 1) {
+					ArrayList<BlockPos> corners = new ArrayList<BlockPos>(4);
+
+					LinkedList<BlockPos> queue = new LinkedList<BlockPos>();
+					queue.add(new BlockPos(i, height, j));
+					cityMap[i][j] = 4;
+
+					// Breadth first search, adding corners to list of corners and setting all cells
+					// == 1 to 4
+					// We don't need to worry about out of bounds because the outer 4 blocks cannot
+					// equal 1 and cannot be queued
+					while (!queue.isEmpty()) {
+						BlockPos queuePos = queue.poll();
+
+						// check -x neighbor
+						int x = queuePos.getX() - 1;
+						int z = queuePos.getZ();
+						if (cityMap[x][z] == 1) {
+							cityMap[x][z] = 4;
+							queue.add(new BlockPos(x, height, z));
+						}
+
+						// check +x neighbor
+						x = queuePos.getX() + 1;
+//						z is already set
+						if (cityMap[x][z] == 1) {
+							cityMap[x][z] = 4;
+							queue.add(new BlockPos(x, height, z));
+						}
+
+						// check -z neighbor
+						x = queuePos.getX();
+						z = queuePos.getZ() - 1;
+						if (cityMap[x][z] == 1) {
+							cityMap[x][z] = 4;
+							queue.add(new BlockPos(x, height, z));
+						}
+
+						// check +z neighbor
+						// x is already set
+						z = queuePos.getZ() + 1;
+						if (cityMap[x][z] == 1) {
+							cityMap[x][z] = 4;
+							queue.add(new BlockPos(x, height, z));
+						}
+
+						// This took a lot of trial and error. TODO figure out how to explain later.
+						x = queuePos.getX();
+						z = queuePos.getZ();
+						if (cityMap[x][z] == 4) {
+							int threeCorners = 0; // number of size 3 corners where all cells in the corner == 1 or == 4
+							// -x -z corner
+							if (isOneorFour(cityMap[x - 1][z - 1]) && isOneorFour(cityMap[x][z - 1])
+									&& isOneorFour(cityMap[x - 1][z]))
+								threeCorners++;
+							// +x -z corner
+							if (isOneorFour(cityMap[x + 1][z - 1]) && isOneorFour(cityMap[x][z - 1])
+									&& isOneorFour(cityMap[x + 1][z]))
+								threeCorners++;
+							// -x +z corner
+							if (isOneorFour(cityMap[x - 1][z + 1]) && isOneorFour(cityMap[x][z + 1])
+									&& isOneorFour(cityMap[x - 1][z]))
+								threeCorners++;
+							// +x +z corner
+							if (isOneorFour(cityMap[x + 1][z + 1]) && isOneorFour(cityMap[x][z + 1])
+									&& isOneorFour(cityMap[x + 1][z]))
+								threeCorners++;
+
+							if (threeCorners == 1 || threeCorners == 3)
+								corners.add(queuePos);
+						}
+					}
+
+					// If more than 20 corners, the buildings filler will run forever, so it splits
+					// them in half then runs the corner search again, setting all the cells to 1,
+					// and decrements j to run the whole step again.
+					if (corners.size() > 15) {
+						int xMax = 0;
+						int xMin = 176;
+						int zMax = 0;
+						int zMin = 176;
+						for (BlockPos c : corners) {
+							if (c.getX() > xMax)
+								xMax = c.getX();
+							if (c.getX() < xMin)
+								xMin = c.getX();
+							if (c.getZ() > zMax)
+								zMax = c.getZ();
+							if (c.getZ() < zMin)
+								zMin = c.getZ();
+							cityMap[c.getX()][c.getZ()] = 1;
+							queue.add(c);
+						}
+
+						// Wherever the polygon is widest (x or z), divide the polygon in half along
+						// that axis
+						if (xMax - xMin > zMax - zMin) {
+							int middle = (xMax + xMin) / 2;
+							for (int k = 0; k < 176; k++) {
+								if (cityMap[middle][k] == 4)
+									cityMap[middle][k] = 5;
+							}
+						} else {
+							int middle = (zMax + zMin) / 2;
+							for (int k = 0; k < 176; k++) {
+								if (cityMap[k][middle] == 4)
+									cityMap[k][middle] = 5;
+							}
+						}
+
+						while (!queue.isEmpty()) {
+							BlockPos queuePos = queue.poll();
+							// check -x neighbor
+							int x = queuePos.getX() - 1;
+							int z = queuePos.getZ();
+							if (cityMap[x][z] == 4) {
+								cityMap[x][z] = 1;
+								queue.add(new BlockPos(x, height, z));
+							}
+							// check +x neighbor
+							x = queuePos.getX() + 1;
+//							z is already set
+							if (cityMap[x][z] == 4) {
+								cityMap[x][z] = 1;
+								queue.add(new BlockPos(x, height, z));
+							}
+							// check -z neighbor
+							x = queuePos.getX();
+							z = queuePos.getZ() - 1;
+							if (cityMap[x][z] == 4) {
+								cityMap[x][z] = 1;
+								queue.add(new BlockPos(x, height, z));
+							}
+							// check +z neighbor
+							// x is already set
+							z = queuePos.getZ() + 1;
+							if (cityMap[x][z] == 4) {
+								cityMap[x][z] = 1;
+								queue.add(new BlockPos(x, height, z));
+							}
+						}
+						// Decrement j to restart corner search.
+						j--;
+					} else {
+						// TODO Figure out a generic way to do this, instead of DESERT_BUILDING specific
+						System.out.println("I'm a new set of buildings! at " + i + "," + j);
+						buildingsList.addAll(DESERT_BUILDING.fillWithBuildings(/* templateManager */true, corners));
+					}
+				}
+			}
+		}
+		return buildingsList;
+	}
+
+	/*
+	 * I hate it here
+	 */
+	private static boolean isOneorFour(int n) {
+		return n == 1 || n == 4;
 	}
 
 	public static class Piece extends TemplateStructurePiece {
