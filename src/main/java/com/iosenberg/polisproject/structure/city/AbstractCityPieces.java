@@ -594,9 +594,9 @@ public class AbstractCityPieces {
 		return path.toArray(new ChunkPos[0]);
 	}
 
-	static ArrayList<Point> generateBuildings(byte[][] cityMap) {
-		final int height = 0;
-		ArrayList<Point> buildingsList = new ArrayList<>();
+	static ArrayList<StructurePiece> generateBuildings(byte[][] cityMap, TemplateManager templateManager, BlockPos pos) {
+		final int height = pos.getY();
+		ArrayList<StructurePiece> buildingsList = new ArrayList<>();
 		for (int i = 0; i < 176; i++) {
 			for (int j = 0; j < 176; j++) {
 				// Find the corners of every section of 1s surrounded by not 1s
@@ -676,7 +676,7 @@ public class AbstractCityPieces {
 					// If more than 20 corners, the buildings filler will run forever, so it splits
 					// them in half then runs the corner search again, setting all the cells to 1,
 					// and decrements j to run the whole step again.
-					if (corners.size() > 15) {
+					if (corners.size() > 12) {
 						int xMax = 0;
 						int xMin = 176;
 						int zMax = 0;
@@ -746,7 +746,7 @@ public class AbstractCityPieces {
 					} else {
 						// TODO Figure out a generic way to do this, instead of DESERT_BUILDING specific
 						System.out.println("I'm a new set of buildings! at " + i + "," + j);
-						buildingsList.addAll(DESERT_BUILDING.fillWithBuildings(/* templateManager */true, corners));
+						buildingsList.addAll(DESERT_BUILDING.fillWithBuildings(templateManager, corners, pos));
 					}
 				}
 			}

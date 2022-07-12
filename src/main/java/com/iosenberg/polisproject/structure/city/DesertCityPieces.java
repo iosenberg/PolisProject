@@ -158,10 +158,10 @@ public class DesertCityPieces extends AbstractCityPieces {
 		}
 
 //		System.out.println("house time: ");
-		ArrayList<Point> buildings = generateBuildings(cityMap);
-		for (Point b : buildings) {
+		pieceList.addAll(generateBuildings(cityMap, templateManager, centerPos));
+//		for (StructurePiece b : buildings) {
 //			System.out.print(b.x + "," + b.y + "\n");
-		}
+//		}
 //		System.out.println();
 
 
