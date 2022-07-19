@@ -3,6 +3,7 @@ package com.iosenberg.polisproject.structure.city;
 import java.util.ArrayList;
 
 import com.iosenberg.polisproject.PolisProject;
+import com.iosenberg.polisproject.structure.city.AbstractCityPieces.Piece;
 import com.mojang.datafixers.util.Pair;
 
 import net.minecraft.util.ResourceLocation;
@@ -68,6 +69,7 @@ public class CityBuildings {
 		@SuppressWarnings("unchecked")
 		private static Pair<Integer, ArrayList<StructurePiece>> fillWithBuildingsRecurse(
 				TemplateManager templateManager, ArrayList<BlockPos> cornerList, BlockPos pos) {
+//			System.out.println("new bitch!");
 
 			// If the polygon is not a rectangle, shave off a rectangle in the x and z
 			// directions and return the best solution of each of those
@@ -357,6 +359,8 @@ public class CityBuildings {
 					shortLength = xLength;
 					flip = true;
 				}
+				
+//				System.out.println("square! of size " + xLength + "," + zLength);
 
 				//To avoid wasting calculation time
 				if(longLength < 9 || shortLength < 9)
@@ -368,7 +372,7 @@ public class CityBuildings {
 				// If x is longer and larger than largestX or x is smaller and larger than
 				// largestZ
 				if (longLength > DESERT_BUILDING.largestX || shortLength > DESERT_BUILDING.largestZ) {
-					System.out.println("TOO LONG!!!" + longLength + "," + shortLength);
+//					System.out.println("TOO LONG!!!" + longLength + "," + shortLength);
 					ArrayList<BlockPos> twoSplitCornersList1 = new ArrayList<>();
 					ArrayList<BlockPos> twoSplitCornersList2 = new ArrayList<>();
 
@@ -447,40 +451,62 @@ public class CityBuildings {
 							templateManager, twoSplitCornersList2, pos);
 					int twoSplitCost = twoSplitSolution1.getFirst() + twoSplitSolution2.getFirst();
 
-					Pair<Integer, ArrayList<StructurePiece>> threeSplitSolution1 = fillWithBuildingsRecurse(
-							templateManager, threeSplitCornersList1, pos);
-					Pair<Integer, ArrayList<StructurePiece>> threeSplitSolution2 = fillWithBuildingsRecurse(
-							templateManager, threeSplitCornersList2, pos);
-					Pair<Integer, ArrayList<StructurePiece>> threeSplitSolution3 = fillWithBuildingsRecurse(
-							templateManager, threeSplitCornersList3, pos);
-					int threeSplitCost = threeSplitSolution1.getFirst() + threeSplitSolution2.getFirst()
-							+ threeSplitSolution3.getFirst();
+//					Pair<Integer, ArrayList<StructurePiece>> threeSplitSolution1 = fillWithBuildingsRecurse(
+//							templateManager, threeSplitCornersList1, pos);
+//					Pair<Integer, ArrayList<StructurePiece>> threeSplitSolution2 = fillWithBuildingsRecurse(
+//							templateManager, threeSplitCornersList2, pos);
+//					Pair<Integer, ArrayList<StructurePiece>> threeSplitSolution3 = fillWithBuildingsRecurse(
+//							templateManager, threeSplitCornersList3, pos);
+//					int threeSplitCost = threeSplitSolution1.getFirst() + threeSplitSolution2.getFirst()
+//							+ threeSplitSolution3.getFirst();
 
-					if (twoSplitCost <= threeSplitCost) {
+//					if (twoSplitCost <= threeSplitCost) {
 						ArrayList<StructurePiece> tempPieceList = twoSplitSolution1.getSecond();
 						tempPieceList.addAll(twoSplitSolution2.getSecond());
 						return new Pair<Integer, ArrayList<StructurePiece>>(twoSplitCost, tempPieceList);
-					}
+//					}
+//					else {
+//						ArrayList<StructurePiece> tempPieceList = threeSplitSolution1.getSecond();
+//						tempPieceList.addAll(threeSplitSolution2.getSecond());
+//						tempPieceList.addAll(threeSplitSolution3.getSecond());
+//						return new Pair<Integer, ArrayList<StructurePiece>>(threeSplitCost, tempPieceList);
+//					}
 				}
-
+				
 				// Fill Square with a building
 				int buildingIndex = 0;
+//				System.out.println("Hello boy time\n" + longLength + "," + shortLength);
 				while (buildingIndex < DESERT_BUILDING.values().length - 1
-						&& DESERT_BUILDING.values()[buildingIndex].xSize > longLength
-						&& DESERT_BUILDING.values()[buildingIndex].zSize > shortLength) {
+						&& (DESERT_BUILDING.values()[buildingIndex].xSize < longLength
+						|| DESERT_BUILDING.values()[buildingIndex].zSize < shortLength)) {
+//					System.out.println(DESERT_BUILDING.values()[buildingIndex].xSize + "," + DESERT_BUILDING.values()[buildingIndex].zSize);
 					buildingIndex++;
 				}
 				DESERT_BUILDING building = DESERT_BUILDING.values()[buildingIndex];
-				int cost = longLength - building.xSize + shortLength - building.zSize;
+//				System.out.println("I've settled on " + buildingIndex);
+				int cost = longLength - building.xSize + shortLength - building.zSize + 1;
 
+				//TODO fix so as not to use Math.random
 				Rotation rot = (flip ? (Math.random() < 0.5 ? Rotation.CLOCKWISE_90 : Rotation.COUNTERCLOCKWISE_90)
 						: (Math.random() < 0.5 ? Rotation.NONE : Rotation.CLOCKWISE_180));
-				BlockPos buildingPos = new BlockPos(lowX + pos.getX() - 80, pos.getY() + 1, lowZ + pos.getZ() - 80);
+				BlockPos buildingPos = new BlockPos(
+						pos.getX() - 80 + (rot.equals(Rotation.NONE) || rot.equals(Rotation.COUNTERCLOCKWISE_90) ? lowX : highX), 
+						pos.getY() + 1, 
+						pos.getZ() - 80 + (rot.equals(Rotation.NONE) || rot.equals(Rotation.CLOCKWISE_90) ? lowZ : highZ));
 
 				StructurePiece piece = new AbstractCityPieces.Piece(templateManager, building.resourceLocation(),
-						building.offset(buildingPos, rot), rot);
+						buildingPos, rot)/*building.offset(buildingPos, rot), rot)*/;
 				ArrayList<StructurePiece> tempPieceList = new ArrayList<>();
 				tempPieceList.add(piece);
+				for(int i = 1; i < longLength-8; i++) {
+					tempPieceList.add(new AbstractCityPieces.Piece(templateManager, building.resourceLocation(),
+							buildingPos.above(i), rot));
+				}
+				for(BlockPos c: cornerList) {
+					for(int i = pos.getY(); i < pos.getY() + 4; i++)
+						tempPieceList.add(new AbstractCityPieces.Piece(templateManager, DesertCityPieces.WOOL[((building.xSize + building.zSize) % 32)/2],
+								new BlockPos(c.getX() + pos.getX() - 80, i, c.getZ() + pos.getZ() - 80), Rotation.NONE));
+				}
 				return new Pair<Integer, ArrayList<StructurePiece>>(cost, tempPieceList);
 			}
 		}

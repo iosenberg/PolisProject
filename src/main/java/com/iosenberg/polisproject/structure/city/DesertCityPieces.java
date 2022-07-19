@@ -26,7 +26,7 @@ public class DesertCityPieces extends AbstractCityPieces {
 			new ResourceLocation(PolisProject.MODID, "desert_city/street_3"),
 			new ResourceLocation(PolisProject.MODID, "desert_city/street_4") };
 	private static final ResourceLocation TEMPSTREET = new ResourceLocation(PolisProject.MODID, "street");
-	private static final ResourceLocation[] WOOL = {
+	public static final ResourceLocation[] WOOL = {
 			new ResourceLocation(PolisProject.MODID, "wool/wool1"),
 			new ResourceLocation(PolisProject.MODID, "wool/wool2"),
 			new ResourceLocation(PolisProject.MODID, "wool/wool3"),
